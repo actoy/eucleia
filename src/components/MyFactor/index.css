@@ -1,0 +1,13 @@
+.factor-container {
+  /* padding: 0 3%; */
+}
+.factor-item {
+  line-height: 56px;
+  padding: 0 3%;
+}
+
+.factor-label {
+  font-size: 14px;
+  color: #999;
+  margin-right: 10px;
+}

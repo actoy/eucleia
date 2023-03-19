@@ -1,0 +1,82 @@
+.stock-detail-container {
+  margin-top: 20px;
+}
+
+.stock-detail-title {
+  font-size: 16px;
+  text-align: center;
+  line-height: 46px;
+  font-weight: 500;
+  background: #efefef;
+  padding: 0 3%;
+}
+
+.stock-detail-tab {
+  line-height: 46px;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 3%;
+}
+.selected {
+  color: #000;
+  font-weight: 500;
+}
+
+.stock-detail-item-title {
+  line-height: 46px;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 3%;
+}
+
+.stock-detail-item-tip {
+  line-height: 38px;
+  padding: 0 3%;
+  text-align: center;
+  background: #efefef;
+  font-weight: 500;
+}
+
+.stock-detail-item-detail {
+  /* height: 120px; */
+  text-align: center;
+  line-height: 20px;
+  background: #efefef;
+  padding: 10px 3% 30px;
+}
+.stack div {
+  left: -20px;
+}
+.red {
+  color: red;
+}
+.green {
+  color: green;
+}
+.gray {
+  color: gray;
+}
+.blue {
+  color: skyblue;
+}
+.relative {
+  position: relative;
+}
+.detail {
+  border-bottom: 1px skyblue dashed;
+  font-size: 14px;
+  position: absolute;
+  width: 250%;
+  right: 0;
+}
+
+.ant-table-thead .ant-table-cell{
+  vertical-align: middle;
+}
+:where(.css-dev-only-do-not-override-1me4733).ant-table-wrapper .ant-table-thead>tr>th, :where(.css-dev-only-do-not-override-1me4733).ant-table-wrapper .ant-table-tbody>tr>th, :where(.css-dev-only-do-not-override-1me4733).ant-table-wrapper .ant-table-tbody>tr>td, :where(.css-dev-only-do-not-override-1me4733).ant-table-wrapper tfoot>tr>th, :where(.css-dev-only-do-not-override-1me4733).ant-table-wrapper tfoot>tr>td {
+  padding: 8px 8px;
+}

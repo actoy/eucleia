@@ -1,0 +1,20 @@
+.stock-trend-container {
+  background: #efefef;
+}
+.stock-trend-title {
+  font-size: 16px;
+  text-align: center;
+  line-height: 46px;
+  font-weight: 500;
+  padding: 0 3%;
+}
+.stock-trend-index {
+  padding: 0 3%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  line-height: 46px;
+}
+#container {
+  padding: 10px 3%;
+}
