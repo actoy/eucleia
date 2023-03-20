@@ -109,7 +109,7 @@ const MyStockDetail = () => {
       data: {
         expect,
         page: 1, // 从 1 开始
-        size: 20,
+        size: 200,
       },
     });
   };
@@ -171,20 +171,49 @@ const MyStockDetail = () => {
         </li> */}
         <li className="stock-detail-item-tip gray-bottom-border">{tabsData.tips}</li>
         <li className="stock-detail-item-detail">
-          <Table dataSource={data} pagination={false} bordered={true}>
+          <Table
+            dataSource={data}
+            pagination={false}
+            bordered={true}
+            // pagination={{
+            //   pageSize: 50,
+            // }}
+            scroll={{
+              y: 640,
+            }}
+          >
             <Column title="发布日期" dataIndex="cpi_info" key="PublishDate" align="center" render={(cpi_info) => moment(cpi_info['PublishDate']).format('YYYY-MM-DD')} />
             <Column
               title="公布值"
               dataIndex="cpi_info"
               key="PublishValue"
               align="center"
+              width="10%"
               render={(cpi_info, record) => <i className={color(parseFloat(record.cpi_info.PublishValue), parseFloat(record.cpi_info.PredictionValue))}>{cpi_info['PublishValue']}</i>}
             />
-            <Column title="预测值" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue']}/>
+            <Column title="预测值" width="10%" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue']} />
             <ColumnGroup title="发布后T日涨跌(交易日)">
-              <Column title="7日" dataIndex="trend_info" key="trending_7" align="center" render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{trend_info['trending_7']}</i>} />
-              <Column title="15日" dataIndex="trend_info" key="trending_15" align="center" render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{trend_info['trending_15']}</i>} />
-              <Column title="30日" dataIndex="trend_info" key="trending_30" align="center" render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{trend_info['trending_30']}</i>} />
+              <Column
+                title="7日"
+                dataIndex="trend_info"
+                key="trending_7"
+                align="center"
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{trend_info['trending_7']}</i>}
+              />
+              <Column
+                title="15日"
+                dataIndex="trend_info"
+                key="trending_15"
+                align="center"
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{trend_info['trending_15']}</i>}
+              />
+              <Column
+                title="30日"
+                dataIndex="trend_info"
+                key="trending_30"
+                align="center"
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{trend_info['trending_30']}</i>}
+              />
             </ColumnGroup>
           </Table>
           {/* <Table columns={columns} dataSource={data} pagination={false}/> */}
