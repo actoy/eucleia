@@ -8,23 +8,27 @@ import PubSub from 'pubsub-js';
 const Factor = () => {
   const [periodTime, setPeriodTime] = useState(null);
   const [value, setValue] = useState(null);
+  const [valueObj, setValueObj] = useState(null);
   useEffect(() => {
     fetch({ url: '/v1/economic/range' }).then(({ data }) => {
       const formatData = data.map((item) => {
         return {
           value: `${item.start_time},${item.end_time}`,
           label: `${item.start_time} ~ ${item.end_time}`,
+          ...item
         };
       });
       setPeriodTime(formatData);
       setValue(formatData[0]);
+      setValueObj(formatData[0]);
       const time = formatData[0].value.split(',');
       PubSub.publish('choosePeriodTime', { startTime: time[0], endTime:time[1] });
     });
   }, []);
 
-  const onChange = (value) => {
+  const onChange = (value,valueObj) => {
     setValue(value);
+    setValueObj(valueObj);
     const time = value.split(',');
     PubSub.publish('choosePeriodTime', { startTime: time[0],endTime:time[1] });
   };
@@ -48,9 +52,8 @@ const Factor = () => {
         </Space>
       </li>
       <li className="factor-item">
-        <span className="factor-label">观察周期：</span>
+        <span className="observation-period factor-label">观察周期：</span>
         <Select
-          showSearch
           placeholder="请选择经济周期"
           optionFilterProp="children"
           onChange={onChange}
@@ -60,6 +63,7 @@ const Factor = () => {
           options={periodTime}
           style={{ width: 220 }}
         />
+        <span className='cpi-value'>{valueObj?.start_value} > {valueObj?.highest_value} > {valueObj?.end_value} </span>
       </li>
     </ul>
   );

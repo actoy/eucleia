@@ -4,10 +4,29 @@
 .factor-item {
   line-height: 56px;
   padding: 0 3%;
+  position: relative;
+}
+.observation-period {
+  position: relative;
+  top: 10px;
 }
 
 .factor-label {
   font-size: 14px;
   color: #999;
   margin-right: 10px;
+}
+
+:where(.css-dev-only-do-not-override-1me4733).ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  height: 50px;
+}
+.cpi-value {
+  width: 220px;
+  display: block;
+  line-height: 1;
+  position: absolute;
+  bottom: 8px;
+  left: 90px;
+  text-align: center;
+  font-size: 12px;
 }
