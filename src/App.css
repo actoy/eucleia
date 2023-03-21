@@ -25,3 +25,7 @@ html, body {
 .none {
   display: none;
 }
+
+.ant-select-selector {
+  height: 100%!important;
+}

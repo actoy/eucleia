@@ -61,9 +61,9 @@ const Factor = () => {
           value={value}
           filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
           options={periodTime}
-          style={{ width: 220 }}
+          style={{ width: 220, height: 50 }}
         />
-        <span className='cpi-value'>{valueObj?.start_value} > {valueObj?.highest_value} > {valueObj?.end_value} </span>
+        <span className="cpi-value">{valueObj?.start_value} > {valueObj?.highest_value} > {valueObj?.end_value} </span>
       </li>
     </ul>
   );
