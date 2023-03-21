@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/static/css/main.73361f3f.css",
-    "main.js": "/static/js/main.8fa92033.js",
+    "main.js": "/static/js/main.cfc4e6cf.js",
     "static/js/787.cda612ba.chunk.js": "/static/js/787.cda612ba.chunk.js",
     "static/media/wave-fish.jpg": "/static/media/wave-fish.4575fbc2b2c495fa83bd.jpg",
     "index.html": "/index.html",
     "main.73361f3f.css.map": "/static/css/main.73361f3f.css.map",
-    "main.8fa92033.js.map": "/static/js/main.8fa92033.js.map",
+    "main.cfc4e6cf.js.map": "/static/js/main.cfc4e6cf.js.map",
     "787.cda612ba.chunk.js.map": "/static/js/787.cda612ba.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.73361f3f.css",
-    "static/js/main.8fa92033.js"
+    "static/js/main.cfc4e6cf.js"
   ]
 }

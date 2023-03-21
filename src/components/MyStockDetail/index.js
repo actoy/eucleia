@@ -188,10 +188,10 @@ const MyStockDetail = () => {
               dataIndex="cpi_info"
               key="PublishValue"
               align="center"
-              width="10%"
+              width="14%"
               render={(cpi_info, record) => <i className={color(parseFloat(record.cpi_info.PublishValue), parseFloat(record.cpi_info.PredictionValue))}>{cpi_info['PublishValue']}</i>}
             />
-            <Column title="预测值" width="10%" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue']} />
+            <Column title="预测值" width="14%" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue']} />
             <ColumnGroup title="发布后T日涨跌(交易日)">
               <Column
                 title="7日"

@@ -52,18 +52,19 @@ class MyStockTrend extends React.Component {
     this.dualAxes = new DualAxes('container', {
       data: [[], []],
       xField: 'PublishDate',
+      // xField: ['PublishDate', 'PublishDate'],
       reversed: true,
       yField: ['ClosingPrice', 'PublishValue'],
       smooth: true,
       width: 400,
       height: 250,
-      xAxis: {
-        label: {
-          formatter: (v) => {
-            return moment(v).format('YYYY-MM-DD');
-          },
-        },
-      },
+      // xAxis: {
+      //   label: {
+      //     formatter: (v) => {
+      //       return moment(v).format('YYYY-MM-DD');
+      //     },
+      //   },
+      // },
       meta: {
         ClosingPrice: {
           alias: '纳斯达克',
@@ -71,6 +72,10 @@ class MyStockTrend extends React.Component {
         PublishValue: {
           alias: 'CPI',
         },
+        PublishDate: {
+          type: 'time',
+          mask: 'YYYY-MM-DD'
+        }
       },
       geometryOptions: [
         {
