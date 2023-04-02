@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button, Space, Select, Table, Tag } from 'antd';
 import { Line, Stock, DualAxes } from '@antv/g2plot';
 import { fetch } from '../../modules';
+import PubSub from 'pubsub-js';
 const { Column, ColumnGroup } = Table;
 
 const onChange = (value: string) => {
@@ -100,35 +101,51 @@ const periodTime = [
 //     },
 //   },
 // ];
-
+let startTime, endTime;
 const MyStockDetail = () => {
-  const getTrendDetail = function (expect) {
+  const [tabsData, setTabsData] = useState({});
+  const [current, setCurrent] = useState('all');
+  const [data, setData] = useState([]);
+  const [risingInfo, setRisingInfo] = useState([]);
+
+  const toFixedPercent = (num1, num2) => {
+    if (num1 && num2) {
+      return ((num1 / num2) * 100).toFixed(2);
+    } else {
+      return 0;
+    }
+  };
+  const getTrendDetail = function (expect, startTime, endTime) {
     return fetch({
       url: 'v1/economic/trend/detail',
       method: 'post',
       data: {
         expect,
+        startTime,
+        endTime,
         page: 1, // 从 1 开始
         size: 200,
       },
+    }).then(({ data }) => {
+      setData(data.lists);
+      setRisingInfo(data.rising_info);
     });
   };
-  const [tabsData, setTabsData] = useState({});
-  const [data, setData] = useState([]);
+
   useEffect(() => {
     fetch({ url: '/v1/cpi/detail/tabs' }).then(({ data }) => setTabsData(data));
-    getTrendDetail('all').then(({ data }) => {
-      setData(data.lists);
+    PubSub.subscribe('choosePeriodTime', (msgName, data) => {
+      startTime = data.startTime;
+      endTime = data.endTime;
+      getTrendDetail(current, data.startTime, data.endTime);
     });
   }, []);
-  const [current, setCurrent] = useState('all');
   const onClick = (e) => {
     const { type } = e.target.dataset;
     if (!type) return;
     setCurrent(type);
-    getTrendDetail(type).then(({ data }) => {
-      setData(data.lists);
-    });
+    console.log('startTime:', startTime);
+    getTrendDetail(type, startTime, endTime);
   };
   const color = (val1, val2) => {
     if (val1 === val2) return 'gray';
@@ -147,6 +164,9 @@ const MyStockDetail = () => {
         </li>
         <li data-type="lowest" className={current === 'lowest' ? 'selected' : ''}>
           低于预期({tabsData.low_value}次)
+        </li>
+        <li data-type="equal" className={current === 'equal' ? 'selected' : ''}>
+          符合预期({tabsData.equal_value}次)
         </li>
       </ul>
       <ul className="stock-detail">
@@ -169,7 +189,27 @@ const MyStockDetail = () => {
             />
           </div>
         </li> */}
-        <li className="stock-detail-item-tip gray-bottom-border">{tabsData.tips}</li>
+        {current === 'all' ? (
+          <li className="stock-detail-item-tip gray-bottom-border">
+            周期内CPI共发布{tabsData.total}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.total)}%，15个交易日上涨概率
+            {toFixedPercent(risingInfo.rising_number_15, tabsData.total)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.total)}%
+          </li>
+        ) : current === 'highest' ? (
+          <li className="stock-detail-item-tip gray-bottom-border">
+            周期内CPI发布高于预期共{tabsData.high_value}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.high_value)}%，15个交易日上涨概率
+            {toFixedPercent(risingInfo.rising_number_15, tabsData.high_value)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.high_value)}%
+          </li>
+        ) : current === 'lowest' ? (
+          <li className="stock-detail-item-tip gray-bottom-border">
+            周期内CPI发布低于预期共{tabsData.low_value}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.low_value)}%，15个交易日上涨概率
+            {toFixedPercent(risingInfo.rising_number_15, tabsData.low_value)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.low_value)}%
+          </li>
+        ) : (
+          <li className="stock-detail-item-tip gray-bottom-border">
+            周期内CPI发布符合预期共{tabsData.equal_value}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.equal_value)}%，15个交易日上涨概率
+            {toFixedPercent(risingInfo.rising_number_15, tabsData.equal_value)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.equal_value)}%
+          </li>
+        )}
         <li className="stock-detail-item-detail">
           <Table
             dataSource={data}
@@ -189,30 +229,30 @@ const MyStockDetail = () => {
               key="PublishValue"
               align="center"
               width="14%"
-              render={(cpi_info, record) => <i className={color(parseFloat(record.cpi_info.PublishValue), parseFloat(record.cpi_info.PredictionValue))}>{cpi_info['PublishValue']}</i>}
+              render={(cpi_info, record) => <i className={color(parseFloat(record.cpi_info.PublishValue), parseFloat(record.cpi_info.PredictionValue))}>{cpi_info['PublishValue']}%</i>}
             />
-            <Column title="预测值" width="14%" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue']} />
+            <Column title="预测值" width="14%" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue'] + '%'} />
             <ColumnGroup title="发布后T日涨跌(交易日)">
               <Column
                 title="7日"
                 dataIndex="trend_info"
                 key="trending_7"
                 align="center"
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{trend_info['trending_7']}</i>}
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{(trend_info['trending_7']*100).toFixed(1)}%</i>}
               />
               <Column
                 title="15日"
                 dataIndex="trend_info"
                 key="trending_15"
                 align="center"
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{trend_info['trending_15']}</i>}
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{(trend_info['trending_15']*100).toFixed(1)}%</i>}
               />
               <Column
                 title="30日"
                 dataIndex="trend_info"
                 key="trending_30"
                 align="center"
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{trend_info['trending_30']}</i>}
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{(trend_info['trending_30']*100).toFixed(1)}%</i>}
               />
             </ColumnGroup>
           </Table>

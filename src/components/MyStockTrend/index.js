@@ -12,8 +12,14 @@ class MyStockTrend extends React.Component {
     this.state = {
       marketIndex: ['纳斯达克'], // '道琼斯', '标普500'
       marketTime: [], // '日K', '周K', '月K'
+      startTime: '',
+      endTime: ''
     };
     PubSub.subscribe('choosePeriodTime', (msgName, data) => {
+      this.setState({
+        startTime: data.startTime,
+        endTime: data.endTime
+      })
       this.getG2Data(data.startTime, data.endTime);
     });
   }
@@ -58,13 +64,17 @@ class MyStockTrend extends React.Component {
       smooth: true,
       width: 400,
       height: 250,
-      // xAxis: {
-      //   label: {
-      //     formatter: (v) => {
-      //       return moment(v).format('YYYY-MM-DD');
-      //     },
-      //   },
-      // },
+      yAxis: {
+        PublishValue: {
+          label: {
+            formatter: (v) => {
+              return `${v}%`;
+            },
+          },
+        },
+      },
+      // scale: { PublishDate: { type: 'cat' } },
+      // interval: { type: 'month', count: 1 },
       meta: {
         ClosingPrice: {
           alias: '纳斯达克',
@@ -74,8 +84,14 @@ class MyStockTrend extends React.Component {
         },
         PublishDate: {
           type: 'time',
-          mask: 'YYYY-MM-DD'
-        }
+          mask: 'YYYY-MM-DD',
+        },
+      },
+      scale: {
+        PublishDate: {
+          type: 'time',
+          range: [this.state.startTime, this.state.endTime],
+        },
       },
       geometryOptions: [
         {

@@ -22,6 +22,7 @@ const Factor = () => {
       setValue(formatData[0]);
       setValueObj(formatData[0]);
       const time = formatData[0].value.split(',');
+      console.log('useEffect')
       PubSub.publish('choosePeriodTime', { startTime: time[0], endTime:time[1] });
     });
   }, []);
@@ -63,7 +64,7 @@ const Factor = () => {
           options={periodTime}
           style={{ width: 220, height: 50 }}
         />
-        <span className="cpi-value">{valueObj?.start_value} > {valueObj?.highest_value} > {valueObj?.end_value} </span>
+        <span className="cpi-value">{valueObj?.start_value}% > {valueObj?.highest_value}% > {valueObj?.end_value}% </span>
       </li>
     </ul>
   );
