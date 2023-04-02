@@ -120,7 +120,7 @@ const MyStockDetail = () => {
       url: 'v1/economic/trend/detail',
       method: 'post',
       data: {
-        expect,
+        expect: expect || 'all',
         startTime,
         endTime,
         page: 1, // 从 1 开始
