@@ -101,7 +101,7 @@ const periodTime = [
 //     },
 //   },
 // ];
-let startTime, endTime;
+let startTime, endTime, current1;
 const MyStockDetail = () => {
   const [tabsData, setTabsData] = useState({});
   const [current, setCurrent] = useState('all');
@@ -133,17 +133,20 @@ const MyStockDetail = () => {
   };
 
   useEffect(() => {
-    fetch({ url: '/v1/cpi/detail/tabs' }).then(({ data }) => setTabsData(data));
     PubSub.subscribe('choosePeriodTime', (msgName, data) => {
       startTime = data.startTime;
       endTime = data.endTime;
-      getTrendDetail(current, data.startTime, data.endTime);
+      fetch({ url: `/v1/cpi/detail/tabs?startTime=${startTime}&endTime=${endTime}` }).then(({ data }) => {
+        setTabsData(data);
+        getTrendDetail(current1, startTime, endTime);
+      });
     });
   }, []);
   const onClick = (e) => {
     const { type } = e.target.dataset;
     if (!type) return;
     setCurrent(type);
+    current1 = type;
     getTrendDetail(type, startTime, endTime);
   };
   const color = (val1, val2) => {

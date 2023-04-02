@@ -90,7 +90,8 @@ class MyStockTrend extends React.Component {
       scale: {
         PublishDate: {
           type: 'time',
-          range: [this.state.startTime, this.state.endTime],
+          tickCount: 20,
+          // range: [this.state.startTime, this.state.endTime],
         },
       },
       geometryOptions: [
