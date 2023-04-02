@@ -22,7 +22,6 @@ const Factor = () => {
       setValue(formatData[0]);
       setValueObj(formatData[0]);
       const time = formatData[0].value.split(',');
-      console.log('useEffect')
       PubSub.publish('choosePeriodTime', { startTime: time[0], endTime:time[1] });
     });
   }, []);

@@ -16,7 +16,6 @@ const items = [
 const MyMenu = () => {
   const [current, setCurrent] = useState('StockMarket');
   const onClick = (e) => {
-    console.log('click ', e);
     setCurrent(e.key);
   };
   return <Menu className='menu' onClick={onClick} selectedKeys={[current]} mode="horizontal" items={items} />;

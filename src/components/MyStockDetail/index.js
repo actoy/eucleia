@@ -144,7 +144,6 @@ const MyStockDetail = () => {
     const { type } = e.target.dataset;
     if (!type) return;
     setCurrent(type);
-    console.log('startTime:', startTime);
     getTrendDetail(type, startTime, endTime);
   };
   const color = (val1, val2) => {
