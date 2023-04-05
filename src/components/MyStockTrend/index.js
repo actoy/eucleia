@@ -1,9 +1,8 @@
 import './index.css';
 import React from 'react';
 import { Button, Space } from 'antd';
-import { Line, Stock, DualAxes } from '@antv/g2plot';
+import { DualAxes } from '@antv/g2plot';
 import { fetch } from '../../modules';
-import moment from 'moment';
 import PubSub from 'pubsub-js';
 
 class MyStockTrend extends React.Component {

@@ -1,0 +1,52 @@
+.stock-trend-container {
+  background: #fff;
+  margin-top: 15px;
+}
+.stock-trend-title {
+  font-size: 16px;
+  text-align: center;
+  line-height: 46px;
+  font-weight: 500;
+  padding: 0 3%;
+}
+.stock-trend-index {
+  padding: 0 3%;
+  display: flex;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 46px;
+}
+#container {
+  padding: 10px 3%;
+}
+.stock-trend-summary {
+  background: rgba(98,161,255,0.10);
+  border-radius: 4px;
+  padding: 10px;
+  margin: 10px 20px;
+  display: inline-block;
+}
+.summary-logo {
+  width: 15px;
+  float: left;
+  margin-top: 3px;
+}
+.stock-trend-summary label {
+  font-family: PingFangSC-Regular;
+  font-size: 12px;
+  color: #465161;
+  letter-spacing: 0;
+  font-weight: 400;
+  line-height: 20px;
+  display: block;
+  padding-left: 20px;
+}
+.stock-trend-index .ant-radio-group label {
+  font-family: PingFang-SC-Regular;
+  font-size: 10px;
+  color: #277EFF;
+  border-color: #62A1FF;
+}
+.stock-trend-index .ant-radio-group label.ant-radio-button-wrapper-checked  {
+  color: #fff;
+}

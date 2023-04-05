@@ -1,3 +1,26 @@
 .menu {
-  background-color: #efefef;
+  background-color: #f2f5ff;
+  height: 60px;
+  margin-top: -10px;
+}
+.menu .ant-tabs-nav::before{
+  display: none;
+}
+.menu .ant-tabs-tab-btn{
+  font-family: PingFangSC-Regular;
+  font-size: 14px;
+  color: #465161;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.menu .ant-tabs-tab-active .ant-tabs-tab-btn{
+  font-family: PingFangSC-Semibold;
+  font-size: 18px;
+  color: #000000!important;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.menu .ant-tabs-ink-bar {
+  scale: 0.5;
+  height: 5px!important;
 }

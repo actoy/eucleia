@@ -1,30 +1,31 @@
 import './index.css';
 import moment from 'moment';
-import { useState, useEffect } from 'react';
-import { Button, Space, Select, Table, Tag } from 'antd';
-import { Line, Stock, DualAxes } from '@antv/g2plot';
+import { useState, useEffect, useMemo, useContext } from 'react';
+import { Radio, Table } from 'antd';
 import { fetch } from '../../modules';
 import PubSub from 'pubsub-js';
+import {themes} from '../../static/constant'
+import { AppContext } from "../../App";
 const { Column, ColumnGroup } = Table;
 
-const onChange = (value: string) => {
-  console.log(`selected ${value}`);
-};
+// const onChange = (value: string) => {
+//   console.log(`selected ${value}`);
+// };
 
-const periodTime = [
-  {
-    value: '7',
-    label: '7日涨跌',
-  },
-  {
-    value: '15',
-    label: '15日涨跌',
-  },
-  {
-    value: '30',
-    label: '30日涨跌',
-  },
-];
+// const periodTime = [
+//   {
+//     value: '7',
+//     label: '7日涨跌',
+//   },
+//   {
+//     value: '15',
+//     label: '15日涨跌',
+//   },
+//   {
+//     value: '30',
+//     label: '30日涨跌',
+//   },
+// ];
 
 // const data = [
 //   {
@@ -108,6 +109,8 @@ const MyStockDetail = () => {
   const [data, setData] = useState([]);
   const [risingInfo, setRisingInfo] = useState([]);
 
+  const { theme } = useContext(AppContext)
+
   const toFixedPercent = (num1, num2) => {
     if (num1 && num2) {
       return ((num1 / num2) * 100).toFixed(2);
@@ -143,34 +146,59 @@ const MyStockDetail = () => {
     });
   }, []);
   const onClick = (e) => {
-    const { type } = e.target.dataset;
-    if (!type) return;
-    setCurrent(type);
-    current1 = type;
-    getTrendDetail(type, startTime, endTime);
+    const { value } = e.target;
+    if (!value) return;
+    setCurrent(value);
+    current1 = value;
+    getTrendDetail(value, startTime, endTime);
   };
   const color = (val1, val2) => {
-    if (val1 === val2) return 'gray';
-    if (val1 > val2) return 'red';
-    if (val1 < val2) return 'green';
+    if (val1 === val2) return themes[theme].eqCls;
+    if (val1 > val2) return themes[theme].gtCls;
+    if (val1 < val2) return themes[theme].ltCls;
   };
+
+  const groupTitle = useMemo(() => {
+    let text = 'T日内上涨概率：'
+    let compare = 1
+    if (current === 'all') {
+      compare = tabsData.total
+    } else if (current === 'highest') {
+      compare = tabsData.high_value
+    } else if (current === 'lowest') {
+      compare = tabsData.low_value
+    } else if (current === 'equal') {
+      compare = tabsData.equal_value
+    }
+    text += `7交日内${toFixedPercent(risingInfo.rising_number_7, compare)}%, 15日内${toFixedPercent(risingInfo.rising_number_15, compare)}%，30日内${toFixedPercent(risingInfo.rising_number_30, compare)}%`
+    return <label className='group-title'>
+      {text}
+    </label>
+  }, [current, risingInfo, tabsData])
+
+  const cssTitle = (title) => {
+    return <label className='normal-title'>{ title }</label>
+  }
+
   return (
-    <div className="stock-detail-container gray-top-border">
+    <div className="stock-detail-container">
       <div className="stock-detail-title">CPI数据发布后短期走势</div>
-      <ul className="stock-detail-tab gray-bottom-border" onClick={onClick}>
-        <li data-type="all" className={current === 'all' ? 'selected' : ''}>
-          全部({tabsData.total}次)
-        </li>
-        <li data-type="highest" className={current === 'highest' ? 'selected' : ''}>
-          高于预期({tabsData.high_value}次)
-        </li>
-        <li data-type="lowest" className={current === 'lowest' ? 'selected' : ''}>
-          低于预期({tabsData.low_value}次)
-        </li>
-        <li data-type="equal" className={current === 'equal' ? 'selected' : ''}>
-          符合预期({tabsData.equal_value}次)
-        </li>
-      </ul>
+      <div className='stock-detail-tab'>
+        <Radio.Group value={current} onChange={onClick} buttonStyle="solid">
+          <Radio.Button value='all' key='all' size="small">
+            全部({tabsData.total}次)
+          </Radio.Button>
+          <Radio.Button value='highest' key='highest' size="small">
+            高于预期({tabsData.high_value}次)
+          </Radio.Button>
+          <Radio.Button value='lowest' key='lowest' size="small">
+            低于预期({tabsData.low_value}次)
+          </Radio.Button>
+          <Radio.Button value='equal' key='equal' size="small">
+            符合预期({tabsData.equal_value}次)
+          </Radio.Button>
+        </Radio.Group>
+      </div>
       <ul className="stock-detail">
         {/* <li className="stock-detail-item-title">
           <Space wrap size={20}>
@@ -191,7 +219,7 @@ const MyStockDetail = () => {
             />
           </div>
         </li> */}
-        {current === 'all' ? (
+        {/* {current === 'all' ? (
           <li className="stock-detail-item-tip gray-bottom-border">
             周期内CPI共发布{tabsData.total}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.total)}%，15个交易日上涨概率
             {toFixedPercent(risingInfo.rising_number_15, tabsData.total)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.total)}%
@@ -211,12 +239,12 @@ const MyStockDetail = () => {
             周期内CPI发布符合预期共{tabsData.equal_value}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.equal_value)}%，15个交易日上涨概率
             {toFixedPercent(risingInfo.rising_number_15, tabsData.equal_value)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.equal_value)}%
           </li>
-        )}
+        )} */}
         <li className="stock-detail-item-detail">
           <Table
             dataSource={data}
             pagination={false}
-            bordered={true}
+            bordered={false}
             // pagination={{
             //   pageSize: 50,
             // }}
@@ -224,33 +252,42 @@ const MyStockDetail = () => {
               y: 640,
             }}
           >
-            <Column title="发布日期" dataIndex="cpi_info" key="PublishDate" align="center" render={(cpi_info) => moment(cpi_info['PublishDate']).format('YYYY-MM-DD')} />
-            <Column
-              title="公布值"
-              dataIndex="cpi_info"
-              key="PublishValue"
-              align="center"
-              width="14%"
-              render={(cpi_info, record) => <i className={color(parseFloat(record.cpi_info.PublishValue), parseFloat(record.cpi_info.PredictionValue))}>{cpi_info['PublishValue']}%</i>}
-            />
-            <Column title="预测值" width="14%" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue'] + '%'} />
-            <ColumnGroup title="发布后T日涨跌(交易日)">
+            <ColumnGroup title={groupTitle} key='group'>
+              <Column 
+                title={cssTitle("发布日期")} 
+                dataIndex="cpi_info" 
+                key="PublishDate" 
+                align="center" 
+                render={(cpi_info) => <label className='date-title'>{moment(cpi_info['PublishDate']).format('YYYY-MM-DD')}</label>} />
               <Column
-                title="7日"
+                title={cssTitle("公布值(预测值)")}
+                dataIndex="cpi_info"
+                key="PublishValue"
+                align="center"
+                render={(cpi_info, record) => 
+                  <label>
+                    <i className={color(parseFloat(record.cpi_info.PublishValue), parseFloat(record.cpi_info.PredictionValue))}>{cpi_info['PublishValue']}%&nbsp;</i>
+                    <span className='small'>({record.cpi_info['PredictionValue'] + '%'})</span>
+                  </label>
+                }
+              />
+              {/* <Column title={cssTitle("预测值" width="14%" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue'] + '%'} /> */}
+              <Column
+                title={cssTitle("7日")}
                 dataIndex="trend_info"
                 key="trending_7"
                 align="center"
                 render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{(trend_info['trending_7']*100).toFixed(1)}%</i>}
               />
               <Column
-                title="15日"
+                title={cssTitle("15日")}
                 dataIndex="trend_info"
                 key="trending_15"
                 align="center"
                 render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{(trend_info['trending_15']*100).toFixed(1)}%</i>}
               />
               <Column
-                title="30日"
+                title={cssTitle("30日")}
                 dataIndex="trend_info"
                 key="trending_30"
                 align="center"

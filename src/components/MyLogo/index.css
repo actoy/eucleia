@@ -2,8 +2,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 3%;
-  line-height: 60px;
+  padding: 0 10px;
+  line-height: 40px;
+  background: #f2f5ff;
 }
 .inner-container {
   display: flex;
@@ -11,17 +12,28 @@
   align-items: center;
 }
 .logo {
-  height: 40px;
-  /* width: 100%; */
-  max-width: 100px;
+  width: 96px;
 }
 .logan {
   color: #999;
   margin-left: 5px;
 }
 .outer-container {
-  color: #999;
+  font-family: PingFangSC-Regular;
+  font-size: 12px;
+  color: #465161;
+  letter-spacing: 0;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .slider-outlined {
   color: red;
+}
+
+.theme-logo {
+  width: 20px;
+  height: 20px;
+  margin-right: 3px;
 }
