@@ -264,6 +264,7 @@ const MyStockDetail = () => {
                 dataIndex="cpi_info"
                 key="PublishValue"
                 align="center"
+                width={100}
                 render={(cpi_info, record) => 
                   <label>
                     <i className={color(parseFloat(record.cpi_info.PublishValue), parseFloat(record.cpi_info.PredictionValue))}>{cpi_info['PublishValue']}%&nbsp;</i>

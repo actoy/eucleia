@@ -65,6 +65,7 @@ const Factor = () => {
 
   const handleChangeReason = (tag, checked) => {
     setReason(tag.value);
+    PubSub.publish('reasonData', {type: tag.value})
   };
 
   const handleChangeFromData = (tag, checked) => {
