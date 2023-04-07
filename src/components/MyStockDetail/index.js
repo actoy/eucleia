@@ -257,6 +257,7 @@ const MyStockDetail = () => {
                 title={cssTitle("发布日期")} 
                 dataIndex="cpi_info" 
                 key="PublishDate" 
+                width={90}
                 align="center" 
                 render={(cpi_info) => <label className='date-title'>{moment(cpi_info['PublishDate']).format('YYYY-MM-DD')}</label>} />
               <Column

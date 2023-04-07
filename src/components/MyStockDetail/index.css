@@ -22,6 +22,7 @@
   font-size: 10px;
   color: #277EFF;
   border-color: #62A1FF;
+  padding-inline: 10px;
 }
 .stock-detail-tab .ant-radio-group label.ant-radio-button-wrapper-checked  {
   color: #fff;

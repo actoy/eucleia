@@ -20,11 +20,16 @@
   padding: 10px 3%;
 }
 .stock-trend-summary {
-  background: rgba(98,161,255,0.10);
+  background: #fff;
   border-radius: 4px;
-  padding: 10px;
-  margin: 10px 20px;
+  padding: 0px 50px;
+  margin: 10px 0px;
   display: inline-block;
+  width: 100%;
+}
+.stock-trend-summary > div {
+  background: rgba(98,161,255,0.10);
+  padding: 10px;
 }
 .summary-logo {
   width: 15px;

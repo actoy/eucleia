@@ -399,8 +399,10 @@ const MyStockTrendEcharts = () => {
           </div>
         </div>
         <div className='stock-trend-summary'>
-          <img className="summary-logo" src={require('../../static/images/用研.png')} alt="wave-fish" />
-          <label>我是一段总结，我是一段总结，我是一段总结，我是一段总结，我是一段总结，我是一段总结。</label>
+          <div>
+            <img className="summary-logo" src={require('../../static/images/用研.png')} alt="wave-fish" />
+            <label>我是一段总结，我是一段总结，我是一段总结，我是一段总结，我是一段总结，我是一段总结。</label>
+          </div>
         </div>
       </div>
 }
