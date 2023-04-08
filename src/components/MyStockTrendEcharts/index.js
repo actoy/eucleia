@@ -24,6 +24,7 @@ import { AppContext } from "../../App";
 import moment from 'moment';
 import _ from 'lodash'
 import { themes } from '../../static/constant';
+import { toThousandFilter } from '../../util/helper';
 
 echarts.use([
   TitleComponent,
@@ -53,6 +54,13 @@ const MyStockTrendEcharts = () => {
     endTime: '',
     type: 'cpi'
   })
+  // 周期内的CPI最高值，以及最高值相对于起始值的涨幅（绝对值：最高值-起始值），大盘指数累积 涨跌幅就用周期末的指数/周期开始的指数 - 1就行。
+  // cpi最高值
+  const [highestPrice, setHighestPrice] = useState(0)
+  // cpi涨幅
+  const [upRate, setUpRate] = useState(0)
+  // 指数累计
+  const [accumulate, setAccumulate] = useState(0)
 
   const [market, setMarket] = useState('纳斯达克')
 
@@ -147,6 +155,18 @@ const MyStockTrendEcharts = () => {
       const predictValues = getCpi(data0, economicIndicators.data.cpi_list, 'PredictionValue')
       const publishValues = getCpi(data0, economicIndicators.data.cpi_list, 'PublishValue')
 
+      // 最高值
+      const indicators = economicIndicators.data.cpi_list
+      if (indicators.length > 0) {
+        const highestMap = indicators.map(item => item.PublishValue)
+        const highest = Math.max(...highestMap)
+        setHighestPrice(highest)
+        setUpRate(highest - indicators[0].PublishValue )
+        const last = indicators[indicators.length - 1].PublishValue
+        const first = indicators[0].PublishValue
+        setAccumulate(((last * 100) / (first * 100)) / 100 -1)
+      }
+
       setOptions({
         title: {
           text: '',
@@ -156,15 +176,39 @@ const MyStockTrendEcharts = () => {
           trigger: 'axis',
           axisPointer: {
             type: 'cross'
+          },
+          formatter: (params) => {
+            console.log(params)
+            let res = ''
+            let formatName = ['', '开盘', '收盘', '最高', '最低']
+            if (params.length > 0) {
+              let date = params[0].axisValueLabel
+              res += `${date}<br/>`
+              params.forEach(param => {
+                if (param.componentSubType === 'candlestick') {
+                  param.data.forEach((item, index) => {
+                    if (index > 0) {
+                      res += `<span style="background: ${param.color}; height:10px; width: 10px; border-radius: 50%;display: inline-block;margin-right:5px;"></span><span style="display:inline-block;margin-right: 10px;"> ${formatName[index]}</span>${toThousandFilter(item)}<br/>`
+                    }
+                  })
+                }
+                if (param.componentSubType === 'line') {
+                  res += `<span style="background: ${param.color}; height:10px; width: 10px; border-radius: 50%;display: inline-block;margin-right:5px;"></span><span style="display:inline-block;margin-right: 10px;">${param.seriesName}</span>${toThousandFilter(param.data[1])}<br/>`
+                }
+              })
+              return res
+            } else {
+              return null
+            }
           }
         },
         legend: {
           data: ['日K', 'CPI公布', 'CPI预测']
         },
         grid: {
-          left: '10%',
-          right: '10%',
-          bottom: '60px'
+          left: '12%',
+          right: '8%',
+          bottom: '30px'
         },
         xAxis: {
           type: 'category',
@@ -184,7 +228,7 @@ const MyStockTrendEcharts = () => {
           type: 'value',
           axisLabel: {
             formatter: (text) => {
-              return text.toFixed(2) + '%'
+              return text.toFixed(0) + '%'
             }
           }
         }],
@@ -195,7 +239,7 @@ const MyStockTrendEcharts = () => {
             end: 100
           },
           {
-            show: true,
+            show: false,
             type: 'slider',
             top: '90%',
             start: 70,
@@ -213,87 +257,89 @@ const MyStockTrendEcharts = () => {
               borderColor: upBorderColor,
               borderColor0: downBorderColor
             },
-            markPoint: {
-              label: {
-                formatter: function (param) {
-                  return param != null ? Math.round(param.value) + '' : '';
-                }
-              },
-              data: [
-                {
-                  name: 'highest value',
-                  type: 'max',
-                  valueDim: 'highest'
-                },
-                {
-                  name: 'lowest value',
-                  type: 'min',
-                  valueDim: 'lowest'
-                },
-                {
-                  name: 'average value on close',
-                  type: 'average',
-                  valueDim: 'close'
-                }
-              ],
-              tooltip: {
-                formatter: function (param) {
-                  return param.name + '<br>' + (param.data.coord || '');
-                }
-              }
-            },
-            markLine: {
-              symbol: ['none', 'none'],
-              data: [
-                [
-                  {
-                    name: 'from lowest to highest',
-                    type: 'min',
-                    valueDim: 'lowest',
-                    symbol: 'circle',
-                    symbolSize: 10,
-                    label: {
-                      show: false
-                    },
-                    emphasis: {
-                      label: {
-                        show: false
-                      }
-                    }
-                  },
-                  {
-                    type: 'max',
-                    valueDim: 'highest',
-                    symbol: 'circle',
-                    symbolSize: 10,
-                    label: {
-                      show: false
-                    },
-                    emphasis: {
-                      label: {
-                        show: false
-                      }
-                    }
-                  }
-                ],
-                {
-                  name: 'min line on close',
-                  type: 'min',
-                  valueDim: 'close'
-                },
-                {
-                  name: 'max line on close',
-                  type: 'max',
-                  valueDim: 'close'
-                }
-              ]
-            }
+            // markPoint: {
+            //   label: {
+            //     formatter: function (param) {
+            //       return param != null ? Math.round(param.value) + '' : '';
+            //     }
+            //   },
+            //   data: [
+            //     {
+            //       name: 'highest value',
+            //       type: 'max',
+            //       valueDim: 'highest'
+            //     },
+            //     {
+            //       name: 'lowest value',
+            //       type: 'min',
+            //       valueDim: 'lowest'
+            //     },
+            //     {
+            //       name: 'average value on close',
+            //       type: 'average',
+            //       valueDim: 'close'
+            //     }
+            //   ],
+            //   tooltip: {
+            //     formatter: function (param) {
+            //       return param.name + '<br>' + (param.data.coord || '');
+            //     }
+            //   }
+            // },
+            // markLine: {
+            //   symbol: ['none', 'none'],
+            //   data: [
+            //     [
+            //       {
+            //         name: 'from lowest to highest',
+            //         type: 'min',
+            //         valueDim: 'lowest',
+            //         symbol: 'circle',
+            //         symbolSize: 10,
+            //         label: {
+            //           show: false
+            //         },
+            //         emphasis: {
+            //           label: {
+            //             show: false
+            //           }
+            //         }
+            //       },
+            //       {
+            //         type: 'max',
+            //         valueDim: 'highest',
+            //         symbol: 'circle',
+            //         symbolSize: 10,
+            //         label: {
+            //           show: false
+            //         },
+            //         emphasis: {
+            //           label: {
+            //             show: false
+            //           }
+            //         }
+            //       }
+            //     ],
+            //     {
+            //       name: 'min line on close',
+            //       type: 'min',
+            //       valueDim: 'close'
+            //     },
+            //     {
+            //       name: 'max line on close',
+            //       type: 'max',
+            //       valueDim: 'close'
+            //     }
+            //   ]
+            // }
           },
           {
             name: 'CPI公布',
             type: 'line',
             yAxisIndex: 1,
             data: publishValues,
+            showAllSymbol: true,
+            symbolSize: 4,
             smooth: false,
             lineStyle: {
               opacity: 0.5,
@@ -305,6 +351,8 @@ const MyStockTrendEcharts = () => {
             type: 'line',
             yAxisIndex: 1,
             data: predictValues,
+            showAllSymbol: true,
+            symbolSize: 4,
             smooth: false,
             lineStyle: {
               opacity: 0.5,
@@ -362,17 +410,10 @@ const MyStockTrendEcharts = () => {
   };
 
   return <div className="stock-trend-container">
-        <div className="stock-trend-title">CPI通胀周期内大盘整体走势</div>
+        <div className="stock-trend-title">通胀周期内NASDAQ指数趋势</div>
         <div className="stock-trend-chart">
           <div className="stock-trend-index">
-            {/* <Space wrap size={5}>
-              {base.marketIndex.map((item, index) => (
-                <Button type={index === 0 ? 'primary' : 'default'} key={item} size="small">
-                  {item}
-                </Button>
-              ))}
-            </Space> */}
-            <Radio.Group value={market} onChange={onChangeMarket} buttonStyle="solid">
+            <Radio.Group style={{display: 'none'}} value={market} onChange={onChangeMarket} buttonStyle="solid">
               {base.marketIndex.map((item, index) => (
                 <Radio.Button value={item} key={item} size="small">
                   {item}
@@ -401,7 +442,7 @@ const MyStockTrendEcharts = () => {
         <div className='stock-trend-summary'>
           <div>
             <img className="summary-logo" src={require('../../static/images/用研.png')} alt="wave-fish" />
-            <label>我是一段总结，我是一段总结，我是一段总结，我是一段总结，我是一段总结，我是一段总结。</label>
+            <label>{`周期内CPI最高值为${highestPrice}，CPI涨幅为${upRate}，大盘指数累积${accumulate}%`}</label>
           </div>
         </div>
       </div>

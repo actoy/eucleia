@@ -279,21 +279,21 @@ const MyStockDetail = () => {
                 dataIndex="trend_info"
                 key="trending_7"
                 align="center"
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{(trend_info['trending_7']*100).toFixed(1)}%</i>}
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{(trend_info['trending_7']*100).toFixed(2)}%</i>}
               />
               <Column
                 title={cssTitle("15日")}
                 dataIndex="trend_info"
                 key="trending_15"
                 align="center"
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{(trend_info['trending_15']*100).toFixed(1)}%</i>}
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{(trend_info['trending_15']*100).toFixed(2)}%</i>}
               />
               <Column
                 title={cssTitle("30日")}
                 dataIndex="trend_info"
                 key="trending_30"
                 align="center"
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{(trend_info['trending_30']*100).toFixed(1)}%</i>}
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{(trend_info['trending_30']*100).toFixed(2)}%</i>}
               />
             </ColumnGroup>
           </Table>

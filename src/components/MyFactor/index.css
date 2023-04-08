@@ -59,13 +59,13 @@
   color: #797980;
   letter-spacing: 0;
   font-weight: 700;
-  margin-left: 12px;
+  margin-left: 5px;
 }
 .picker-children {
   background: #F6F6F8;
   border: 1px solid rgba(229,229,237,1);
   border-radius: 8px;
-  padding: 5px 15px 5px 10px;
+  padding: 5px 20px 5px 10px;
   height: 40px;
   position: relative;
 }

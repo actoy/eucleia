@@ -7,29 +7,34 @@ import {
 import { Picker } from 'antd-mobile';
 import { fetch } from '../../modules';
 import PubSub from 'pubsub-js';
+import moment from 'moment';
 const { CheckableTag } = Tag;
 
 const Reasons = [{
-  label: '经济指标',
-  value: '0'
-},{
-  label: '宏观事件',
-  value: '1'
-}]
+    label: '通胀',
+    value: '0'
+  },
+  // {
+  // label: '加息',
+  // value: '1'
+  // }
+]
 
 const FromDatas = [{
-  label: 'CPI',
+  label: '末季调CPI年率',
   value: 'cpi'
-},{
-  label: 'PPI',
-  value: 'ppi'
-},{
-  label: '非农',
-  value: '0'
-},{
-  label: '利率',
-  value: '1'
-}]
+}
+// ,{
+//   label: 'PPI',
+//   value: 'ppi'
+// },{
+//   label: '非农',
+//   value: '0'
+// },{
+//   label: '利率',
+//   value: '1'
+// }
+]
 
 const Factor = () => {
   const [periodTime, setPeriodTime] = useState([]);
@@ -39,12 +44,14 @@ const Factor = () => {
 
   useEffect(() => {
     fetch({ url: '/v1/economic/range' }).then(({ data }) => {
-      const formatData = data.map((item) => {
+      const formatData = data.map((item, index) => {
+        const startTime = moment(item.start_time).format('YYYY-MM')
+        const endTime = index === 0 ? '至今' : moment(item.end_time).format('YYYY-MM')
         return {
           value: `${item.start_time},${item.end_time}`,
           label: <div className="option-label-item">
-            <label className='picker-main'>{ `${item.start_time} ~ ${item.end_time}` }</label>
-            <label className='picker-sub'>({item?.start_value}% &gt; {item?.highest_value}% &gt; {item?.end_value}%)</label>
+            <label className='picker-main'>{ `${startTime} ~ ${endTime}` }</label>
+            <label className='picker-sub'>CPI ({item?.start_value}% &gt; {item?.highest_value}% &gt; {item?.end_value}%)</label>
           </div>
         };
       });
