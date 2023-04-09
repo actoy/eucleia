@@ -37,11 +37,11 @@
   margin-top: 3px;
 }
 .stock-trend-summary label {
-  font-family: PingFangSC-Regular;
+  font-family: PingFangSC-Semibold;;
   font-size: 12px;
   color: #465161;
   letter-spacing: 0;
-  font-weight: 400;
+  font-weight: bold;
   line-height: 20px;
   display: block;
   padding-left: 20px;

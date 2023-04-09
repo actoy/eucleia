@@ -18,6 +18,7 @@
   letter-spacing: 0;
   font-weight: 500;
   margin-right: 0px;
+  white-space: nowrap;
 }
 
 .cpi-value {

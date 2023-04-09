@@ -21,7 +21,7 @@ const Reasons = [{
 ]
 
 const FromDatas = [{
-  label: '末季调CPI年率',
+  label: '未季调CPI年率',
   value: 'cpi'
 }
 // ,{
@@ -45,13 +45,14 @@ const Factor = () => {
   useEffect(() => {
     fetch({ url: '/v1/economic/range' }).then(({ data }) => {
       const formatData = data.map((item, index) => {
-        const startTime = moment(item.start_time).format('YYYY-MM')
-        const endTime = index === 0 ? '至今' : moment(item.end_time).format('YYYY-MM')
+        const startTime = moment(item.start_time).format('YYYY.MM')
+        const endTime = index === 0 ? '至今' : moment(item.end_time).format('YYYY.MM')
+        /// &gt; {item?.end_value}%)</label>
         return {
           value: `${item.start_time},${item.end_time}`,
           label: <div className="option-label-item">
-            <label className='picker-main'>{ `${startTime} ~ ${endTime}` }</label>
-            <label className='picker-sub'>CPI ({item?.start_value}% &gt; {item?.highest_value}% &gt; {item?.end_value}%)</label>
+            <label className='picker-main'>{ `${startTime} - ${endTime}` }</label>
+            <label className='picker-sub'>CPI ({item?.start_value}% &gt; {item?.highest_value}%)</label>
           </div>
         };
       });

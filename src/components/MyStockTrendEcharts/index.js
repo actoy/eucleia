@@ -160,8 +160,8 @@ const MyStockTrendEcharts = () => {
       if (indicators.length > 0) {
         const highestMap = indicators.map(item => item.PublishValue)
         const highest = Math.max(...highestMap)
-        setHighestPrice(highest)
-        setUpRate(highest - indicators[0].PublishValue )
+        setHighestPrice(highest.toFixed(2))
+        setUpRate((highest - indicators[0].PublishValue).toFixed(2) )
         const last = indicators[indicators.length - 1].PublishValue
         const first = indicators[0].PublishValue
         setAccumulate(((last * 100) / (first * 100)) / 100 -1)
@@ -177,6 +177,7 @@ const MyStockTrendEcharts = () => {
           axisPointer: {
             type: 'cross'
           },
+          confine: true,
           formatter: (params) => {
             console.log(params)
             let res = ''
@@ -200,10 +201,17 @@ const MyStockTrendEcharts = () => {
             } else {
               return null
             }
+          },
+          position: function (pos, params, el, elRect, size) {
+            var obj = {
+                top: 60
+            };
+            obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 5;
+            return obj;
           }
         },
         legend: {
-          data: ['日K', 'CPI公布', 'CPI预测']
+          data: ['日K', 'CPI公布', 'CPI预测', '利率决议']
         },
         grid: {
           left: '12%',
@@ -235,7 +243,7 @@ const MyStockTrendEcharts = () => {
         dataZoom: [
           {
             type: 'inside',
-            start: 70,
+            start: 0,
             end: 100
           },
           {
@@ -358,7 +366,20 @@ const MyStockTrendEcharts = () => {
               opacity: 0.5,
               type: 'dashed'
             }
-          }
+          },
+          {
+            name: '利率决议',
+            type: 'line',
+            yAxisIndex: 1,
+            data: publishValues,
+            showAllSymbol: true,
+            symbolSize: 4,
+            smooth: false,
+            lineStyle: {
+              opacity: 0.5,
+              type: 'dashed'
+            }
+          },
         ]
       })
     });
@@ -442,7 +463,7 @@ const MyStockTrendEcharts = () => {
         <div className='stock-trend-summary'>
           <div>
             <img className="summary-logo" src={require('../../static/images/用研.png')} alt="wave-fish" />
-            <label>{`周期内CPI最高值为${highestPrice}，CPI涨幅为${upRate}，大盘指数累积${accumulate}%`}</label>
+            <label>{`周期内CPI最高值为${highestPrice}%，CPI涨幅为${upRate}%，大盘指数累计${accumulate}%`}</label>
           </div>
         </div>
       </div>

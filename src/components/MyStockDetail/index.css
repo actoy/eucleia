@@ -111,12 +111,12 @@
   padding: 8px 8px;
 }
 .group-title {
-  font-family: PingFang-SC-Regular;
+  font-family: PingFangSC-Semibold;
   font-size: 10px;
   color: #277EFF;
   letter-spacing: 0;
   line-height: 14px;
-  font-weight: 400;
+  font-weight: bold;
 }
 .normal-title {
   font-family: PingFangSC-Semibold;
@@ -131,4 +131,10 @@
   color: #000000;
   letter-spacing: 0;
   font-weight: 700;
+}
+.ant-table-thead > tr > th{
+  white-space:nowrap;
+}
+.ant-table-row td{
+  white-space:nowrap;
 }

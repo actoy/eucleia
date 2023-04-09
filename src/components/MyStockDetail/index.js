@@ -2,10 +2,15 @@ import './index.css';
 import moment from 'moment';
 import { useState, useEffect, useMemo, useContext } from 'react';
 import { Radio, Table } from 'antd';
+import {
+  ArrowUpOutlined,
+  ArrowDownOutlined
+} from '@ant-design/icons'
 import { fetch } from '../../modules';
 import PubSub from 'pubsub-js';
 import {themes} from '../../static/constant'
 import { AppContext } from "../../App";
+import _ from 'lodash';
 const { Column, ColumnGroup } = Table;
 
 // const onChange = (value: string) => {
@@ -102,12 +107,16 @@ const { Column, ColumnGroup } = Table;
 //     },
 //   },
 // ];
-let startTime, endTime, current1;
 const MyStockDetail = () => {
   const [tabsData, setTabsData] = useState({});
   const [current, setCurrent] = useState('all');
   const [data, setData] = useState([]);
   const [risingInfo, setRisingInfo] = useState([]);
+  const [base, setBase] = useState({
+    startTime: '',
+    endTime: '',
+    type: ''
+  })
 
   const { theme } = useContext(AppContext)
 
@@ -137,20 +146,27 @@ const MyStockDetail = () => {
 
   useEffect(() => {
     PubSub.subscribe('choosePeriodTime', (msgName, data) => {
-      startTime = data.startTime;
-      endTime = data.endTime;
-      fetch({ url: `/v1/cpi/detail/tabs?startTime=${startTime}&endTime=${endTime}` }).then(({ data }) => {
-        setTabsData(data);
-        getTrendDetail(current1, startTime, endTime);
-      });
+      setBase(base => ({
+        ...base,
+        startTime: data.startTime,
+        endTime: data.endTime
+      }))
     });
   }, []);
+  useEffect(() => {
+    if (base && base.startTime) {
+      fetch({ url: `/v1/cpi/detail/tabs?startTime=${base.startTime}&endTime=${base.endTime}` }).then(({ data }) => {
+        setTabsData(data);
+        getTrendDetail(current, base.startTime, base.endTime);
+      });
+    }
+  }, [base, current])
+
   const onClick = (e) => {
     const { value } = e.target;
     if (!value) return;
     setCurrent(value);
-    current1 = value;
-    getTrendDetail(value, startTime, endTime);
+    getTrendDetail(value, base.startTime, base.endTime);
   };
   const color = (val1, val2) => {
     if (val1 === val2) return themes[theme].eqCls;
@@ -170,7 +186,7 @@ const MyStockDetail = () => {
     } else if (current === 'equal') {
       compare = tabsData.equal_value
     }
-    text += `7交日内${toFixedPercent(risingInfo.rising_number_7, compare)}%, 15日内${toFixedPercent(risingInfo.rising_number_15, compare)}%，30日内${toFixedPercent(risingInfo.rising_number_30, compare)}%`
+    text += `7日内${toFixedPercent(risingInfo.rising_number_7, compare)}%, 15日内${toFixedPercent(risingInfo.rising_number_15, compare)}%, 30日内${toFixedPercent(risingInfo.rising_number_30, compare)}%`
     return <label className='group-title'>
       {text}
     </label>
@@ -180,9 +196,25 @@ const MyStockDetail = () => {
     return <label className='normal-title'>{ title }</label>
   }
 
+  const getIcon = (publishValue, predictionValue) => {
+    if (_.isNumber(publishValue) && _.isNumber(predictionValue)) {
+      if (parseFloat(publishValue) > parseFloat(predictionValue)) {
+        return <ArrowUpOutlined className={themes[theme].gtCls}/>
+      } else if (parseFloat(publishValue) < parseFloat(predictionValue)) {
+        return <ArrowDownOutlined className={themes[theme].ltCls}/>
+      }
+    }
+    return null
+  }
+
+  const convertData = (data) => {
+    if (data === 0) return '-'
+    return (data*100).toFixed(2) + '%'
+  }
+
   return (
     <div className="stock-detail-container">
-      <div className="stock-detail-title">CPI数据发布后短期走势</div>
+      <div className="stock-detail-title">CPI数据公布 vs NASDAQ指数短期趋势</div>
       <div className='stock-detail-tab'>
         <Radio.Group value={current} onChange={onClick} buttonStyle="solid">
           <Radio.Button value='all' key='all' size="small">
@@ -245,19 +277,20 @@ const MyStockDetail = () => {
             dataSource={data}
             pagination={false}
             bordered={false}
+            sticky={true}
             // pagination={{
             //   pageSize: 50,
             // }}
-            scroll={{
-              y: 640,
-            }}
+            // scroll={{
+            //   y: 640,
+            // }}
           >
             <ColumnGroup title={groupTitle} key='group'>
               <Column 
                 title={cssTitle("发布日期")} 
                 dataIndex="cpi_info" 
                 key="PublishDate" 
-                width={90}
+                // width={90}
                 align="center" 
                 render={(cpi_info) => <label className='date-title'>{moment(cpi_info['PublishDate']).format('YYYY-MM-DD')}</label>} />
               <Column
@@ -265,9 +298,9 @@ const MyStockDetail = () => {
                 dataIndex="cpi_info"
                 key="PublishValue"
                 align="center"
-                width={100}
                 render={(cpi_info, record) => 
                   <label>
+                    {getIcon(record.cpi_info.PublishValue, record.cpi_info.PredictionValue)}
                     <i className={color(parseFloat(record.cpi_info.PublishValue), parseFloat(record.cpi_info.PredictionValue))}>{cpi_info['PublishValue']}%&nbsp;</i>
                     <span className='small'>({record.cpi_info['PredictionValue'] + '%'})</span>
                   </label>
@@ -279,21 +312,24 @@ const MyStockDetail = () => {
                 dataIndex="trend_info"
                 key="trending_7"
                 align="center"
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{(trend_info['trending_7']*100).toFixed(2)}%</i>}
+                // width={60}
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{convertData(trend_info['trending_7'])}</i>}
               />
               <Column
                 title={cssTitle("15日")}
                 dataIndex="trend_info"
                 key="trending_15"
                 align="center"
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{(trend_info['trending_15']*100).toFixed(2)}%</i>}
+                // width={60}
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{convertData(trend_info['trending_15'])}</i>}
               />
               <Column
                 title={cssTitle("30日")}
                 dataIndex="trend_info"
                 key="trending_30"
                 align="center"
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{(trend_info['trending_30']*100).toFixed(2)}%</i>}
+                // width={60}
+                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{convertData(trend_info['trending_30'])}</i>}
               />
             </ColumnGroup>
           </Table>
