@@ -23,7 +23,7 @@ import { fetch } from '../../modules';
 import { AppContext } from "../../App";
 import moment from 'moment';
 import _ from 'lodash'
-import { themes } from '../../static/constant';
+import { themes, resultMap } from '../../static/constant';
 import { toThousandFilter } from '../../util/helper';
 
 echarts.use([
@@ -48,21 +48,25 @@ const MyStockTrendEcharts = () => {
   const [options, setOptions] = useState({})
   const [loading, setLoading] = useState(false)
   const [base, setBase] = useState({
-    marketIndex: ['纳斯达克' ,'道琼斯', '标普500'],
+    marketIndex: [{
+      label: '纳斯达克',
+      value: 'ndaq'
+    }],
     marketTime: [], // '日K', '周K', '月K'
     startTime: '',
     endTime: '',
-    type: 'cpi'
+    type: 'cpi',
+    market: 'ndaq'
   })
   // 周期内的CPI最高值，以及最高值相对于起始值的涨幅（绝对值：最高值-起始值），大盘指数累积 涨跌幅就用周期末的指数/周期开始的指数 - 1就行。
+  // cpi起始值
+  const [initPrice, setInitPrice] = useState(0)
   // cpi最高值
   const [highestPrice, setHighestPrice] = useState(0)
   // cpi涨幅
   const [upRate, setUpRate] = useState(0)
   // 指数累计
   const [accumulate, setAccumulate] = useState(0)
-
-  const [market, setMarket] = useState('纳斯达克')
 
   const upColor = useMemo(() => {
     return themes[theme].upColor;
@@ -120,7 +124,7 @@ const MyStockTrendEcharts = () => {
       url: '/v1/economic/stock',
       method: 'post',
       data: {
-        type: 'ndaq',
+        type: base.market,
         start_time: base.startTime,
         end_time: base.endTime,
       },
@@ -144,7 +148,7 @@ const MyStockTrendEcharts = () => {
     Promise.all([fetchEconomicStock(), fetchEconomicIndicators()]).then(([economicStock, economicIndicators]) => {
       setLoading(false)
       // Each item: date, open，close，lowest，highest
-      const data0 = splitData(economicStock.data.ndaq_list.map(item => ([
+      const data0 = splitData(economicStock.data[resultMap[base.market]].map(item => ([
         moment(item.PublishDate).format('YYYY/MM/DD'),
         item.OpeningPrice,
         item.ClosingPrice,
@@ -152,20 +156,32 @@ const MyStockTrendEcharts = () => {
         item.HighestPrice
       ])))
 
-      const predictValues = getCpi(data0, economicIndicators.data.cpi_list, 'PredictionValue')
-      const publishValues = getCpi(data0, economicIndicators.data.cpi_list, 'PublishValue')
+      const predictValues = getCpi(data0, economicIndicators.data[resultMap[base.type]], 'PredictionValue')
+      const publishValues = getCpi(data0, economicIndicators.data[resultMap[base.type]], 'PublishValue')
 
       // 最高值
-      const indicators = economicIndicators.data.cpi_list
+      const indicators = economicIndicators.data[resultMap[base.type]]
       if (indicators.length > 0) {
         const highestMap = indicators.map(item => item.PublishValue)
         const highest = Math.max(...highestMap)
+        const init = indicators[0].PublishValue
+        setInitPrice(init.toFixed(2))
         setHighestPrice(highest.toFixed(2))
-        setUpRate((highest - indicators[0].PublishValue).toFixed(2) )
+        setUpRate((highest - init).toFixed(2) )
         const last = indicators[indicators.length - 1].PublishValue
         const first = indicators[0].PublishValue
-        setAccumulate(((last * 100) / (first * 100)) / 100 -1)
+        setAccumulate((((last * 100) / (first * 100)) / 100 -1).toFixed(2))
       }
+
+      let legend = ['日K', 'CPI公布', 'CPI预测', '利率决议']
+      let publishName = 'CPI公布'
+      let predictName = 'CPI预测'
+      if (base.type === 'interest_rate') {
+        legend = ['日K', '利率公布', '利率预测']
+        publishName = '利率公布'
+        predictName = '利率预测'
+      }
+      
 
       setOptions({
         title: {
@@ -177,24 +193,29 @@ const MyStockTrendEcharts = () => {
           axisPointer: {
             type: 'cross'
           },
-          confine: true,
           formatter: (params) => {
             console.log(params)
             let res = ''
             let formatName = ['', '开盘', '收盘', '最高', '最低']
             if (params.length > 0) {
               let date = params[0].axisValueLabel
-              res += `${date}<br/>`
+              res += `<div style="display:flex;justify-content: space-between;"><span>${date}</span>`
+              params.forEach(param => {
+                if (param.componentSubType === 'line') {
+                  res += `<span class="markLabel">${param.seriesName}:&nbsp;&nbsp;${toThousandFilter(param.data[1])}%</span>`
+                }
+              })
+              res += '</div><br/>' 
               params.forEach(param => {
                 if (param.componentSubType === 'candlestick') {
+                  // <span class="markPoint" style="background: ${param.color}; ">
+                  res += '<div style="display:flex;justify-content: space-between;margin-top:-10px;">'
                   param.data.forEach((item, index) => {
                     if (index > 0) {
-                      res += `<span style="background: ${param.color}; height:10px; width: 10px; border-radius: 50%;display: inline-block;margin-right:5px;"></span><span style="display:inline-block;margin-right: 10px;"> ${formatName[index]}</span>${toThousandFilter(item)}<br/>`
+                      res += `<span class="markLabel"> ${formatName[index]}:&nbsp;&nbsp;<i style="color:#EF242A">${toThousandFilter(item)}</i></span>`
                     }
                   })
-                }
-                if (param.componentSubType === 'line') {
-                  res += `<span style="background: ${param.color}; height:10px; width: 10px; border-radius: 50%;display: inline-block;margin-right:5px;"></span><span style="display:inline-block;margin-right: 10px;">${param.seriesName}</span>${toThousandFilter(param.data[1])}<br/>`
+                  res += '</div>'
                 }
               })
               return res
@@ -202,16 +223,28 @@ const MyStockTrendEcharts = () => {
               return null
             }
           },
+          backgroundColor: '#F0F0F0',
+          alwaysShowContent: false,
+          padding: [10, 50],
+          textStyle: {
+            color: '#797980',
+            fontFamily: 'PingFangSC-Regular',
+            fontSize: 10
+          },
+          extraCssText: 'box-shadow: none;right:0;z-index:99;',
           position: function (pos, params, el, elRect, size) {
+            console.log(elRect)
+            console.log(size)
             var obj = {
-                top: 60
+                top: -5,
+                left: 0
             };
-            obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 5;
+            // obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 5;
             return obj;
           }
         },
         legend: {
-          data: ['日K', 'CPI公布', 'CPI预测', '利率决议']
+          data: legend
         },
         grid: {
           left: '12%',
@@ -342,7 +375,7 @@ const MyStockTrendEcharts = () => {
             // }
           },
           {
-            name: 'CPI公布',
+            name: publishName,
             type: 'line',
             yAxisIndex: 1,
             data: publishValues,
@@ -355,7 +388,7 @@ const MyStockTrendEcharts = () => {
             }
           },
           {
-            name: 'CPI预测',
+            name: predictName,
             type: 'line',
             yAxisIndex: 1,
             data: predictValues,
@@ -367,19 +400,21 @@ const MyStockTrendEcharts = () => {
               type: 'dashed'
             }
           },
-          {
-            name: '利率决议',
-            type: 'line',
-            yAxisIndex: 1,
-            data: publishValues,
-            showAllSymbol: true,
-            symbolSize: 4,
-            smooth: false,
-            lineStyle: {
-              opacity: 0.5,
-              type: 'dashed'
-            }
-          },
+          ...base.type === 'cpi' ? [
+            {
+              name: '利率决议',
+              type: 'line',
+              yAxisIndex: 1,
+              data: publishValues,
+              showAllSymbol: true,
+              symbolSize: 4,
+              smooth: false,
+              lineStyle: {
+                opacity: 0.5,
+                type: 'dashed'
+              }
+            },
+          ] : []
         ]
       })
     });
@@ -411,8 +446,7 @@ const MyStockTrendEcharts = () => {
     PubSub.subscribe('choosePeriodTime', (msgName, data) => {
       setBase(base => ({
         ...base,
-        startTime: data.startTime,
-        endTime: data.endTime
+        ...data
       }))
     });
   }, [])
@@ -421,23 +455,47 @@ const MyStockTrendEcharts = () => {
     PubSub.subscribe('fromData', (msgName, data) => {
       setBase(base => ({
         ...base,
-        type: data.type
+        ...data
       }))
     });
   }, []);
 
   const onChangeMarket = ({ target: { value } }) => {
-    setMarket(value);
+    setBase(base => ({
+      ...base,
+      market: value
+    }))
   };
 
+  const stockTitle = useMemo(() => {
+    let title = '通胀周期内NASDAQ指数趋势'
+    if (base.type === 'interest_rate') {
+      title = '加息周期内NASDAQ指数趋势'
+    }
+    return title
+  }, [base.type])
+
+  const summary = useMemo(() => {
+    let title = `周期内CPI最高值为${highestPrice}%，CPI涨幅为${upRate}% (${initPrice}%>${highestPrice}%)，大盘指数累计${accumulate}%`
+    if (base.type === 'interest_rate') {
+      title = `周期内加息最高值为${highestPrice}%，加息涨幅为${upRate}% (${initPrice}%>${highestPrice}%)，大盘指数累计${accumulate}%`
+    }
+    return title
+  }, [highestPrice, upRate, accumulate, initPrice, base.type])
+
+  // const tipTitle = useMemo(() => {
+  //   return 'tipTitle'
+  // }, [])
+
   return <div className="stock-trend-container">
-        <div className="stock-trend-title">通胀周期内NASDAQ指数趋势</div>
+        <div className="stock-trend-title">{stockTitle}</div>
+        {/* <div className="stock-trend-tip">{tipTitle}</div> */}
         <div className="stock-trend-chart">
           <div className="stock-trend-index">
-            <Radio.Group style={{display: 'none'}} value={market} onChange={onChangeMarket} buttonStyle="solid">
+            <Radio.Group style={{display: 'none'}} value={base.market} onChange={onChangeMarket} buttonStyle="solid">
               {base.marketIndex.map((item, index) => (
-                <Radio.Button value={item} key={item} size="small">
-                  {item}
+                <Radio.Button value={item.value} key={item.value} size="small">
+                  {item.label}
                 </Radio.Button>
               ))}
             </Radio.Group>
@@ -454,8 +512,8 @@ const MyStockTrendEcharts = () => {
               ref={chartRef}
               echarts={echarts}
               option={options}
-              notMerge={false}
-              lazyUpdate={false}
+              notMerge={true}
+              lazyUpdate={true}
               showLoading={loading}
             />
           </div>
@@ -463,7 +521,7 @@ const MyStockTrendEcharts = () => {
         <div className='stock-trend-summary'>
           <div>
             <img className="summary-logo" src={require('../../static/images/用研.png')} alt="wave-fish" />
-            <label>{`周期内CPI最高值为${highestPrice}%，CPI涨幅为${upRate}%，大盘指数累计${accumulate}%`}</label>
+            <label>{summary}</label>
           </div>
         </div>
       </div>

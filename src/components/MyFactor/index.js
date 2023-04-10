@@ -1,5 +1,5 @@
 import './index.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Tag } from 'antd';
 import {
   CaretDownOutlined
@@ -12,47 +12,58 @@ const { CheckableTag } = Tag;
 
 const Reasons = [{
     label: '通胀',
-    value: '0'
+    minLabel: 'CPI',
+    value: 'economic',// api url
+    fromDatas: [
+      {
+        label: '未季调CPI年率',
+        value: 'cpi'
+      },
+      // {
+      //   label: 'PPI',
+      //   value: 'ppi'
+      // },
+      // {
+      //   label: '非农',
+      //   value: 'non-agricultural'
+      // }
+    ]
   },
-  // {
-  // label: '加息',
-  // value: '1'
-  // }
-]
-
-const FromDatas = [{
-  label: '未季调CPI年率',
-  value: 'cpi'
-}
-// ,{
-//   label: 'PPI',
-//   value: 'ppi'
-// },{
-//   label: '非农',
-//   value: '0'
-// },{
-//   label: '利率',
-//   value: '1'
-// }
+  {
+    label: '加息',
+    minLabel: '利率',
+    value: 'interest/rate',
+    fromDatas: [
+      {
+        label: '美联储利率决议',
+        value: 'interest_rate',
+      }
+    ]
+  }
 ]
 
 const Factor = () => {
   const [periodTime, setPeriodTime] = useState([]);
   const [value, setValue] = useState([]);
-  const [reason, setReason] = useState(['0']);
-  const [fromData, setFromData] = useState(['cpi'])
+  const [reason, setReason] = useState(Reasons[0].value);
+  const [fromData, setFromData] = useState(Reasons[0].fromDatas[0].value)
+
+  const FromDatas = useMemo(() => {
+    return Reasons.find(item => item.value === reason).fromDatas
+  }, [reason])
 
   useEffect(() => {
-    fetch({ url: '/v1/economic/range' }).then(({ data }) => {
+    fetch({ url: `/v1/${reason}/range` }).then(({ data }) => {
       const formatData = data.map((item, index) => {
         const startTime = moment(item.start_time).format('YYYY.MM')
         const endTime = index === 0 ? '至今' : moment(item.end_time).format('YYYY.MM')
         /// &gt; {item?.end_value}%)</label>
+        const title = Reasons.find(item => item.value === reason).minLabel
         return {
           value: `${item.start_time},${item.end_time}`,
           label: <div className="option-label-item">
             <label className='picker-main'>{ `${startTime} - ${endTime}` }</label>
-            <label className='picker-sub'>CPI ({item?.start_value}% &gt; {item?.highest_value}%)</label>
+            <label className='picker-sub'>{title} ({item?.start_value}% &gt; {item?.highest_value}%)</label>
           </div>
         };
       });
@@ -60,9 +71,9 @@ const Factor = () => {
       setPeriodTime([formatData]);
       setValue([formatData[0].value]);
       const time = formatData[0].value.split(',');
-      PubSub.publish('choosePeriodTime', { startTime: time[0], endTime:time[1] });
+      PubSub.publish('choosePeriodTime', { startTime: time[0], endTime:time[1], type: fromData });
     });
-  }, []);
+  }, [reason, fromData]);
 
   const onChange = (value) => {
     console.log(value)
@@ -72,14 +83,18 @@ const Factor = () => {
   };
 
   const handleChangeReason = (tag, checked) => {
-    setReason(tag.value);
     PubSub.publish('reasonData', {type: tag.value})
+    // 初始化
+    const current = Reasons.find(item => item.value === tag.value).fromDatas
+    setFromData(current[0].value);
+    setReason(tag.value);
   };
 
   const handleChangeFromData = (tag, checked) => {
     setFromData(tag.value);
     PubSub.publish('fromData', {type: tag.value})
   };
+  console.log(fromData)
 
   const periodChildren = (_, actions) => {
     if (!periodTime || periodTime.length === 0) return '请选择'
@@ -101,7 +116,7 @@ const Factor = () => {
           <CheckableTag
             className='factor-tag'
             key={tag.value}
-            checked={reason.indexOf(tag.value) > -1}
+            checked={reason === (tag.value)}
             onChange={(checked) => handleChangeReason(tag, checked)}
           >
             {tag.label}
@@ -114,7 +129,7 @@ const Factor = () => {
           <CheckableTag
             className='factor-tag'
             key={tag.value}
-            checked={fromData.indexOf(tag.value) > -1}
+            checked={fromData === (tag.value)}
             onChange={(checked) => handleChangeFromData(tag, checked)}
           >
             {tag.label}

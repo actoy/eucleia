@@ -8,7 +8,7 @@
   line-height: 46px;
   font-weight: 500;
   background: #fff;
-  padding: 0 3%;
+  padding: 0 15px;
 }
 
 .stock-detail-tab {
@@ -17,15 +17,27 @@
   align-items: center;
   background-color: #fff;
 }
+.stock-detail-tab .ant-radio-group{
+  width: 100%;
+  margin: 0 15px;
+}
 .stock-detail-tab .ant-radio-group label {
   font-family: PingFang-SC-Regular;
   font-size: 10px;
   color: #277EFF;
-  border-color: #62A1FF;
-  padding-inline: 10px;
+  border-color: #62A1FF ;
+  padding-inline: 0px;
+  padding-inline: 0;
+  width: 25%;
+  text-align: center;
 }
 .stock-detail-tab .ant-radio-group label.ant-radio-button-wrapper-checked  {
   color: #fff;
+  background: #62A1FF;
+  border-color: #62A1FF ;
+}
+.stock-detail-tab .ant-radio-group label.ant-radio-button-wrapper::before {
+  background-color: #62A1FF ;
 }
 .selected {
   color: #000;
@@ -38,12 +50,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 3%;
+  padding: 0 15px;
 }
 
 .stock-detail-item-tip {
   line-height: 24px;
-  padding: 5px 3%;
+  padding: 5px 15px;
   text-align: center;
   background: #fff;
   font-weight: 400;
@@ -54,7 +66,7 @@
   text-align: center;
   line-height: 20px;
   background: #fff;
-  padding: 20px 3%;
+  padding: 20px 15px;
 }
 .stack div {
   left: -20px;

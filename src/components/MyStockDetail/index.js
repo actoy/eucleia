@@ -4,12 +4,14 @@ import { useState, useEffect, useMemo, useContext } from 'react';
 import { Radio, Table } from 'antd';
 import {
   ArrowUpOutlined,
-  ArrowDownOutlined
+  ArrowDownOutlined,
+  LineOutlined
 } from '@ant-design/icons'
 import { fetch } from '../../modules';
 import PubSub from 'pubsub-js';
 import {themes} from '../../static/constant'
 import { AppContext } from "../../App";
+// import eqArrow from '../../static/images/eq.png'
 import _ from 'lodash';
 const { Column, ColumnGroup } = Table;
 
@@ -115,7 +117,7 @@ const MyStockDetail = () => {
   const [base, setBase] = useState({
     startTime: '',
     endTime: '',
-    type: ''
+    type: 'cpi'
   })
 
   const { theme } = useContext(AppContext)
@@ -127,9 +129,13 @@ const MyStockDetail = () => {
       return 0;
     }
   };
-  const getTrendDetail = function (expect, startTime, endTime) {
+  const getTrendDetail = function (expect, startTime, endTime, type) {
+    let baseUrl = 'economic'
+    if (type === 'interest_rate') {
+      baseUrl = 'interest/rate'
+    }
     return fetch({
-      url: 'v1/economic/trend/detail',
+      url: `v1/${baseUrl}/trend/detail`,
       method: 'post',
       data: {
         expect: expect || 'all',
@@ -148,16 +154,27 @@ const MyStockDetail = () => {
     PubSub.subscribe('choosePeriodTime', (msgName, data) => {
       setBase(base => ({
         ...base,
-        startTime: data.startTime,
-        endTime: data.endTime
+        ...data
+      }))
+    });
+  }, []);
+  useEffect(() => {
+    PubSub.subscribe('fromData', (msgName, data) => {
+      setBase(base => ({
+        ...base,
+        ...data
       }))
     });
   }, []);
   useEffect(() => {
     if (base && base.startTime) {
-      fetch({ url: `/v1/cpi/detail/tabs?startTime=${base.startTime}&endTime=${base.endTime}` }).then(({ data }) => {
+      let baseUrl = 'cpi'
+      if (base.type === 'interest_rate') {
+        baseUrl = 'interest/rate'
+      }
+      fetch({ url: `/v1/${baseUrl}/detail/tabs?startTime=${base.startTime}&endTime=${base.endTime}` }).then(({ data }) => {
         setTabsData(data);
-        getTrendDetail(current, base.startTime, base.endTime);
+        getTrendDetail(current, base.startTime, base.endTime, base.type);
       });
     }
   }, [base, current])
@@ -166,7 +183,7 @@ const MyStockDetail = () => {
     const { value } = e.target;
     if (!value) return;
     setCurrent(value);
-    getTrendDetail(value, base.startTime, base.endTime);
+    getTrendDetail(value, base.startTime, base.endTime, base.type);
   };
   const color = (val1, val2) => {
     if (val1 === val2) return themes[theme].eqCls;
@@ -202,19 +219,32 @@ const MyStockDetail = () => {
         return <ArrowUpOutlined className={themes[theme].gtCls}/>
       } else if (parseFloat(publishValue) < parseFloat(predictionValue)) {
         return <ArrowDownOutlined className={themes[theme].ltCls}/>
+      } else {
+        return <LineOutlined style={{fontSize: '10px', marginRight: '2px'}}/>
+        // return <img className="arrow-logo" src={eqArrow} alt='相等' />
       }
     }
     return null
   }
 
-  const convertData = (data) => {
-    if (data === 0) return '-'
-    return (data*100).toFixed(2) + '%'
+  const convertData = (data, rate = 100, decimal = 2) => {
+    if (data === null) return '-'
+    return (data * rate).toFixed(decimal) + '%'
   }
+
+  const stockTitle = useMemo(() => {
+    let title = 'CPI数据公布 vs NASDAQ指数短期趋势'
+    if (base.type === 'interest_rate') {
+      title = '利率决议公布 vs NASDAQ指数短期趋势'
+    }
+    return title
+  }, [base.type])
+
+  console.log(base)
 
   return (
     <div className="stock-detail-container">
-      <div className="stock-detail-title">CPI数据公布 vs NASDAQ指数短期趋势</div>
+      <div className="stock-detail-title">{stockTitle}</div>
       <div className='stock-detail-tab'>
         <Radio.Group value={current} onChange={onClick} buttonStyle="solid">
           <Radio.Button value='all' key='all' size="small">
@@ -288,21 +318,21 @@ const MyStockDetail = () => {
             <ColumnGroup title={groupTitle} key='group'>
               <Column 
                 title={cssTitle("发布日期")} 
-                dataIndex="cpi_info" 
+                dataIndex={`${base.type}_info`}
                 key="PublishDate" 
                 // width={90}
                 align="center" 
-                render={(cpi_info) => <label className='date-title'>{moment(cpi_info['PublishDate']).format('YYYY-MM-DD')}</label>} />
+                render={(info) => info && <label className='date-title'>{moment(info['PublishDate']).format('YYYY-MM-DD')}</label>} />
               <Column
                 title={cssTitle("公布值(预测值)")}
-                dataIndex="cpi_info"
+                dataIndex={`${base.type}_info`}
                 key="PublishValue"
                 align="center"
-                render={(cpi_info, record) => 
-                  <label>
-                    {getIcon(record.cpi_info.PublishValue, record.cpi_info.PredictionValue)}
-                    <i className={color(parseFloat(record.cpi_info.PublishValue), parseFloat(record.cpi_info.PredictionValue))}>{cpi_info['PublishValue']}%&nbsp;</i>
-                    <span className='small'>({record.cpi_info['PredictionValue'] + '%'})</span>
+                render={(info, record) => 
+                  info && <label>
+                    {getIcon(info.PublishValue, info.PredictionValue)}
+                    <i className={(parseFloat(info.PublishValue), parseFloat(info.PredictionValue))}>{convertData(info['PublishValue'], 1, 1)}&nbsp;</i>
+                    <span className='small'>({convertData(info['PredictionValue'], 1, 1)})</span>
                   </label>
                 }
               />
