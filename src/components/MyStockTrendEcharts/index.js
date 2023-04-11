@@ -236,7 +236,7 @@ const MyStockTrendEcharts = () => {
             console.log(elRect)
             console.log(size)
             var obj = {
-                top: -5,
+                top: -10,
                 left: 0
             };
             // obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 5;

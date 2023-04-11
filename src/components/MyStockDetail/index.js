@@ -331,7 +331,7 @@ const MyStockDetail = () => {
                 render={(info, record) => 
                   info && <label>
                     {getIcon(info.PublishValue, info.PredictionValue)}
-                    <i className={(parseFloat(info.PublishValue), parseFloat(info.PredictionValue))}>{convertData(info['PublishValue'], 1, 1)}&nbsp;</i>
+                    <i className='small'>{convertData(info['PublishValue'], 1, 1)}&nbsp;</i>
                     <span className='small'>({convertData(info['PredictionValue'], 1, 1)})</span>
                   </label>
                 }
