@@ -8,6 +8,7 @@ import { Picker } from 'antd-mobile';
 import { fetch } from '../../modules';
 import PubSub from 'pubsub-js';
 import moment from 'moment';
+import { marketDatas } from '../../static/constant';
 const { CheckableTag } = Tag;
 
 const Reasons = [{
@@ -32,7 +33,7 @@ const Reasons = [{
   {
     label: '加息',
     minLabel: '利率',
-    value: 'interest/rate',
+    value: 'interest/rate',// api url
     fromDatas: [
       {
         label: '美联储利率决议',
@@ -47,6 +48,7 @@ const Factor = () => {
   const [value, setValue] = useState([]);
   const [reason, setReason] = useState(Reasons[0].value);
   const [fromData, setFromData] = useState(Reasons[0].fromDatas[0].value)
+  const [marketData, setMarketData] = useState(marketDatas[0].value)
 
   const FromDatas = useMemo(() => {
     return Reasons.find(item => item.value === reason).fromDatas
@@ -83,7 +85,6 @@ const Factor = () => {
   };
 
   const handleChangeReason = (tag, checked) => {
-    PubSub.publish('reasonData', {type: tag.value})
     // 初始化
     const current = Reasons.find(item => item.value === tag.value).fromDatas
     setFromData(current[0].value);
@@ -94,7 +95,11 @@ const Factor = () => {
     setFromData(tag.value);
     PubSub.publish('fromData', {type: tag.value})
   };
-  console.log(fromData)
+  
+  const handleChangeMarketData = (tag, checked) => {
+    setMarketData(tag.value);
+    PubSub.publish('marketData', {market: tag.value})
+  };
 
   const periodChildren = (_, actions) => {
     if (!periodTime || periodTime.length === 0) return '请选择'
@@ -171,6 +176,19 @@ const Factor = () => {
             {periodChildren}
           </Picker> : null
         }
+      </li>
+      <li className="factor-item" style={{display: 'none'}}>
+        <span className="factor-label">选择指数：</span>
+        {marketDatas.map((tag) => (
+          <CheckableTag
+            className='factor-tag'
+            key={tag.value}
+            checked={marketData === (tag.value)}
+            onChange={(checked) => handleChangeMarketData(tag, checked)}
+          >
+            {tag.label}
+          </CheckableTag>
+        ))}
       </li>
     </ul>
   );

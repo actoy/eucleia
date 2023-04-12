@@ -1,32 +1,40 @@
 import React, { useState } from 'react';
 import 'antd/dist/reset.css';
+import zhCN from 'antd/es/locale/zh_CN';
+import { ConfigProvider } from 'antd'
+import Cookies from 'js-cookie'
+import { useRoutes } from 'react-router';
+import routes from './router'
 import './App.css';
 
 
 import MyLogo from './components/MyLogo';
 import MyMenu from './components/MyMenu';
-import MyFactor from './components/MyFactor';
-// import MyStockTrend from './components/MyStockTrend';
-import MyStockDetail from './components/MyStockDetail';
-import MyStockTrendEcharts from './components/MyStockTrendEcharts';
 
 export const AppContext = React.createContext(null)
 
 const App = () => {
-  const [theme, setTheme] = useState(0)
+  const [theme, setTheme] = useState(Number(Cookies.get('eucleia-theme')) || 0)
+
+  const handleSetTheme = (theme) => {
+    setTheme(theme)
+    Cookies.set('eucleia-theme', theme)
+  }
 
   return  <div className="App">
-      <MyLogo theme={theme} setTheme={setTheme}/>
-      <MyMenu />
-      <MyFactor />
-      <AppContext.Provider value={
-        {
-          theme
-        }
-      }>
-        <MyStockTrendEcharts />
-        <MyStockDetail />
-      </AppContext.Provider>
+      <ConfigProvider locale={zhCN}>
+        <MyLogo theme={theme} setTheme={handleSetTheme}/>
+        <MyMenu />
+        <AppContext.Provider value={
+          {
+            theme
+          }
+        }>
+          {
+            useRoutes(routes)
+          }
+        </AppContext.Provider>
+      </ConfigProvider>
     </div>
 }
 

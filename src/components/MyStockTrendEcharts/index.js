@@ -17,13 +17,13 @@ import {
 } from 'echarts/charts';
 import { UniversalTransition } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
-import { Button, Space, Radio } from 'antd';
+import { Button, Empty, Space } from 'antd';
 import PubSub from 'pubsub-js';
 import { fetch } from '../../modules';
 import { AppContext } from "../../App";
 import moment from 'moment';
 import _ from 'lodash'
-import { themes, resultMap } from '../../static/constant';
+import { themes, resultMap, marketDatas } from '../../static/constant';
 import { toThousandFilter } from '../../util/helper';
 
 echarts.use([
@@ -48,10 +48,6 @@ const MyStockTrendEcharts = () => {
   const [options, setOptions] = useState({})
   const [loading, setLoading] = useState(false)
   const [base, setBase] = useState({
-    marketIndex: [{
-      label: '纳斯达克',
-      value: 'ndaq'
-    }],
     marketTime: [], // '日K', '周K', '月K'
     startTime: '',
     endTime: '',
@@ -67,6 +63,10 @@ const MyStockTrendEcharts = () => {
   const [upRate, setUpRate] = useState(0)
   // 指数累计
   const [accumulate, setAccumulate] = useState(0)
+
+  const [empty, setEmpty] = useState(false)
+
+  const [data, setData] = useState([])
 
   const upColor = useMemo(() => {
     return themes[theme].upColor;
@@ -143,21 +143,59 @@ const MyStockTrendEcharts = () => {
     });
   }
 
+  const fetchInterestRateIndicators = () => {
+    return fetch({
+      url: '/v1/economic/indicators',
+      method: 'post',
+      data: {
+        type: 'interest_rate',
+        start_time: base.startTime,
+        end_time: base.endTime,
+      },
+    });
+  }
+
   const getG2Data = () => {
     setLoading(true)
-    Promise.all([fetchEconomicStock(), fetchEconomicIndicators()]).then(([economicStock, economicIndicators]) => {
+    let promises = [fetchEconomicStock(), fetchEconomicIndicators()]
+    if (base.type === 'cpi') {
+      promises.push(fetchInterestRateIndicators())
+    }
+    setEmpty(false)
+    Promise.all(promises).then(([economicStock, economicIndicators, interestRateIndicators]) => {
       setLoading(false)
+      if (!economicStock.data[resultMap[base.market]] || economicStock.data[resultMap[base.market]].length === 0) {
+        setEmpty(true)
+      }
       // Each item: date, open，close，lowest，highest
-      const data0 = splitData(economicStock.data[resultMap[base.market]].map(item => ([
-        moment(item.PublishDate).format('YYYY/MM/DD'),
-        item.OpeningPrice,
-        item.ClosingPrice,
-        item.LowestPrice,
-        item.HighestPrice
-      ])))
+      const convert = economicStock.data[resultMap[base.market]]
+      const data0 = splitData(convert.map((item, index) => {
+        // (当前最新成交价（或收盘价）-开盘参考价)÷开盘参考价×100% 开盘参考价一般是指这只股票在上一个交易日收盘时所呈现出的价格
+        let rate = null
+        if (index > 0) {
+          let prev = convert[index - 1]
+          if (moment(item.PublishDate).isSame(moment(prev.PublishDate).add(1, 'day'))) {
+            rate = (((item.ClosingPrice - prev.ClosingPrice) / prev.ClosingPrice) * 100).toFixed(2)
+          }
+        }
+        return [
+          moment(item.PublishDate).format('YYYY/MM/DD'),
+          item.OpeningPrice,
+          item.ClosingPrice,
+          item.LowestPrice,
+          item.HighestPrice,
+          rate
+        ]
+      }))
+      // console.log(data0)
+      setData(economicStock.data[resultMap[base.market]])
 
       const predictValues = getCpi(data0, economicIndicators.data[resultMap[base.type]], 'PredictionValue')
       const publishValues = getCpi(data0, economicIndicators.data[resultMap[base.type]], 'PublishValue')
+      let interestRateValues = []
+      if (interestRateIndicators) {
+        interestRateValues = getCpi(data0, interestRateIndicators.data['rate_list'], 'PublishValue')
+      }
 
       // 最高值
       const indicators = economicIndicators.data[resultMap[base.type]]
@@ -194,9 +232,9 @@ const MyStockTrendEcharts = () => {
             type: 'cross'
           },
           formatter: (params) => {
-            console.log(params)
+            console.log(data)
             let res = ''
-            let formatName = ['', '开盘', '收盘', '最高', '最低']
+            let formatName = ['', '开盘', '收盘', '最高', '最低', '涨跌幅']
             if (params.length > 0) {
               let date = params[0].axisValueLabel
               res += `<div style="display:flex;justify-content: space-between;"><span>${date}</span>`
@@ -209,10 +247,11 @@ const MyStockTrendEcharts = () => {
               params.forEach(param => {
                 if (param.componentSubType === 'candlestick') {
                   // <span class="markPoint" style="background: ${param.color}; ">
-                  res += '<div style="display:flex;justify-content: space-between;margin-top:-10px;">'
+                  res += '<div style="display:flex;flex-wrap: wrap; margin-top:-10px;">'
                   param.data.forEach((item, index) => {
+                    let prefix = index === 5 ? '%' : ''
                     if (index > 0) {
-                      res += `<span class="markLabel"> ${formatName[index]}:&nbsp;&nbsp;<i style="color:#EF242A">${toThousandFilter(item)}</i></span>`
+                      res += `<span class="markLabel" style="width: 33.33%"> ${formatName[index]}:&nbsp;&nbsp;<i style="color:${param.color}">${toThousandFilter(item)}${prefix}</i></span>`
                     }
                   })
                   res += '</div>'
@@ -225,7 +264,7 @@ const MyStockTrendEcharts = () => {
           },
           backgroundColor: '#F0F0F0',
           alwaysShowContent: false,
-          padding: [10, 50],
+          padding: [10, 30],
           textStyle: {
             color: '#797980',
             fontFamily: 'PingFangSC-Regular',
@@ -236,7 +275,7 @@ const MyStockTrendEcharts = () => {
             console.log(elRect)
             console.log(size)
             var obj = {
-                top: -10,
+                top: -20,
                 left: 0
             };
             // obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 5;
@@ -405,7 +444,7 @@ const MyStockTrendEcharts = () => {
               name: '利率决议',
               type: 'line',
               yAxisIndex: 1,
-              data: publishValues,
+              data: interestRateValues,
               showAllSymbol: true,
               symbolSize: 4,
               smooth: false,
@@ -460,20 +499,24 @@ const MyStockTrendEcharts = () => {
     });
   }, []);
 
-  const onChangeMarket = ({ target: { value } }) => {
-    setBase(base => ({
-      ...base,
-      market: value
-    }))
-  };
+  useEffect(() => {
+    PubSub.subscribe('marketData', (msgName, data) => {
+      setBase(base => ({
+        ...base,
+        ...data
+      }))
+    });
+  }, []);
 
   const stockTitle = useMemo(() => {
-    let title = '通胀周期内NASDAQ指数趋势'
+    const currentMarket = marketDatas.find(item => item.value === base.market)
+    let minLabel = currentMarket ? currentMarket.minLabel : 'NASDAQ'
+    let title = `通胀周期内${minLabel}指数趋势`
     if (base.type === 'interest_rate') {
-      title = '加息周期内NASDAQ指数趋势'
+      title = `加息周期内${minLabel}指数趋势`
     }
     return title
-  }, [base.type])
+  }, [base.type, base.market])
 
   const summary = useMemo(() => {
     let title = `周期内CPI最高值为${highestPrice}%，CPI涨幅为${upRate}% (${initPrice}%>${highestPrice}%)，大盘指数累计${accumulate}%`
@@ -492,13 +535,13 @@ const MyStockTrendEcharts = () => {
         {/* <div className="stock-trend-tip">{tipTitle}</div> */}
         <div className="stock-trend-chart">
           <div className="stock-trend-index">
-            <Radio.Group style={{display: 'none'}} value={base.market} onChange={onChangeMarket} buttonStyle="solid">
+            {/* <Radio.Group style={{display: 'none'}} value={base.market} onChange={onChangeMarket} buttonStyle="solid">
               {base.marketIndex.map((item, index) => (
                 <Radio.Button value={item.value} key={item.value} size="small">
                   {item.label}
                 </Radio.Button>
               ))}
-            </Radio.Group>
+            </Radio.Group> */}
             <Space wrap size={5}>
               {base.marketTime.map((item, index) => (
                 <Button type={index === 0 ? 'primary' : 'default'} key={item} size="small">
@@ -508,14 +551,17 @@ const MyStockTrendEcharts = () => {
             </Space>
           </div>
           <div id="container">
-            <ReactEChartsCore
-              ref={chartRef}
-              echarts={echarts}
-              option={options}
-              notMerge={true}
-              lazyUpdate={true}
-              showLoading={loading}
-            />
+            {
+              !empty ?
+              <ReactEChartsCore
+                ref={chartRef}
+                echarts={echarts}
+                option={options}
+                notMerge={true}
+                lazyUpdate={true}
+                showLoading={loading}
+              /> : <Empty/>
+            }
           </div>
         </div>
         <div className='stock-trend-summary'>

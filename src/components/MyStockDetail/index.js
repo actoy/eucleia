@@ -1,6 +1,6 @@
 import './index.css';
 import moment from 'moment';
-import { useState, useEffect, useMemo, useContext } from 'react';
+import { useState, useEffect, useMemo, useContext, Fragment } from 'react';
 import { Radio, Table } from 'antd';
 import {
   ArrowUpOutlined,
@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons'
 import { fetch } from '../../modules';
 import PubSub from 'pubsub-js';
-import {themes} from '../../static/constant'
+import {themes, marketDatas} from '../../static/constant'
 import { AppContext } from "../../App";
 // import eqArrow from '../../static/images/eq.png'
 import _ from 'lodash';
@@ -117,7 +117,8 @@ const MyStockDetail = () => {
   const [base, setBase] = useState({
     startTime: '',
     endTime: '',
-    type: 'cpi'
+    type: 'cpi',
+    market: 'ndaq'
   })
 
   const { theme } = useContext(AppContext)
@@ -167,6 +168,14 @@ const MyStockDetail = () => {
     });
   }, []);
   useEffect(() => {
+    PubSub.subscribe('marketData', (msgName, data) => {
+      setBase(base => ({
+        ...base,
+        ...data
+      }))
+    });
+  }, []);
+  useEffect(() => {
     if (base && base.startTime) {
       let baseUrl = 'cpi'
       if (base.type === 'interest_rate') {
@@ -192,6 +201,7 @@ const MyStockDetail = () => {
   };
 
   const groupTitle = useMemo(() => {
+    if (!tabsData.high_value || !tabsData.low_value || !tabsData.equal_value) return null
     let text = 'T日内上涨概率：'
     let compare = 1
     if (current === 'all') {
@@ -233,14 +243,14 @@ const MyStockDetail = () => {
   }
 
   const stockTitle = useMemo(() => {
-    let title = 'CPI数据公布 vs NASDAQ指数短期趋势'
+    const currentMarket = marketDatas.find(item => item.value === base.market)
+    let minLabel = currentMarket ? currentMarket.minLabel : 'NASDAQ'
+    let title = `CPI数据公布 vs ${minLabel}指数短期趋势`
     if (base.type === 'interest_rate') {
-      title = '利率决议公布 vs NASDAQ指数短期趋势'
+      title = `利率决议公布 vs ${minLabel}指数短期趋势`
     }
     return title
-  }, [base.type])
-
-  console.log(base)
+  }, [base.type, base.market])
 
   return (
     <div className="stock-detail-container">
@@ -250,15 +260,20 @@ const MyStockDetail = () => {
           <Radio.Button value='all' key='all' size="small">
             全部({tabsData.total}次)
           </Radio.Button>
-          <Radio.Button value='highest' key='highest' size="small">
-            高于预期({tabsData.high_value}次)
-          </Radio.Button>
-          <Radio.Button value='lowest' key='lowest' size="small">
-            低于预期({tabsData.low_value}次)
-          </Radio.Button>
-          <Radio.Button value='equal' key='equal' size="small">
-            符合预期({tabsData.equal_value}次)
-          </Radio.Button>
+          {
+            (!tabsData.high_value && !tabsData.low_value && !tabsData.equal_value) ? null :
+            <Fragment>
+              <Radio.Button value='highest' key='highest' size="small">
+                高于预期({tabsData.high_value}次)
+              </Radio.Button>
+              <Radio.Button value='lowest' key='lowest' size="small">
+                低于预期({tabsData.low_value}次)
+              </Radio.Button>
+              <Radio.Button value='equal' key='equal' size="small">
+                符合预期({tabsData.equal_value}次)
+              </Radio.Button>
+            </Fragment>
+          }
         </Radio.Group>
       </div>
       <ul className="stock-detail">

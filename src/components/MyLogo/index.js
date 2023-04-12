@@ -6,7 +6,7 @@ const MyLogo = (props) => {
   const { theme, setTheme } = props
 
   const changeTheme = () => {
-    setTheme(theme => Number(!theme))
+    setTheme(Number(!theme))
   }
 
   return (

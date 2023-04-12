@@ -1,10 +1,3 @@
-/*
- * @Author: jacob
- * @Date: 2023-04-04 16:15:06
- * @LastEditors: jacob
- * @LastEditTime: 2023-04-10 14:55:21
- * @Description: 
- */
 import redUp from './images/红涨绿跌.png'
 import redDown from './images/绿涨红跌.png'
 
@@ -16,9 +9,9 @@ export const themes = [
     gtCls: 'red',
     ltCls: 'green',
     upColor: '#ec0000',
-    upBorderColor: '#8A0000',
+    upBorderColor: '#ec0000',
     downColor: '#00da3c',
-    downBorderColor: '#008F28',
+    downBorderColor: '#00da3c',
   },
   {
     logo: redDown,
@@ -27,9 +20,9 @@ export const themes = [
     gtCls: 'green',
     ltCls: 'red',
     upColor: '#00da3c',
-    upBorderColor: '#008F28',
+    upBorderColor: '#00da3c',
     downColor: '#ec0000',
-    downBorderColor: '#8A0000',
+    downBorderColor: '#ec0000',
   }
 ]
 
@@ -41,3 +34,11 @@ export const resultMap = {
   'ppi': 'ppi_list',
   'non-agricultural': 'non-agricultural_list'
 }
+
+export const marketDatas = [
+  {
+    label: '纳斯达克',
+    value: 'ndaq',
+    minLabel: 'NASDAQ'
+  }
+]
