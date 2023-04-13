@@ -19,6 +19,7 @@ import { UniversalTransition } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
 import { Button, Empty, Space } from 'antd';
 import PubSub from 'pubsub-js';
+import Cookies from 'js-cookie'
 import { fetch } from '../../modules';
 import { AppContext } from "../../App";
 import moment from 'moment';
@@ -65,8 +66,6 @@ const MyStockTrendEcharts = () => {
   const [accumulate, setAccumulate] = useState(0)
 
   const [empty, setEmpty] = useState(false)
-
-  const [data, setData] = useState([])
 
   const upColor = useMemo(() => {
     return themes[theme].upColor;
@@ -172,10 +171,13 @@ const MyStockTrendEcharts = () => {
       const data0 = splitData(convert.map((item, index) => {
         // (当前最新成交价（或收盘价）-开盘参考价)÷开盘参考价×100% 开盘参考价一般是指这只股票在上一个交易日收盘时所呈现出的价格
         let rate = null
+        let prev = null
         if (index > 0) {
-          let prev = convert[index - 1]
+          prev = convert[index - 1]
           if (moment(item.PublishDate).isSame(moment(prev.PublishDate).add(1, 'day'))) {
             rate = (((item.ClosingPrice - prev.ClosingPrice) / prev.ClosingPrice) * 100).toFixed(2)
+          } else {
+            prev = null
           }
         }
         return [
@@ -184,11 +186,11 @@ const MyStockTrendEcharts = () => {
           item.ClosingPrice,
           item.LowestPrice,
           item.HighestPrice,
-          rate
+          rate,
+          prev
         ]
       }))
       // console.log(data0)
-      setData(economicStock.data[resultMap[base.market]])
 
       const predictValues = getCpi(data0, economicIndicators.data[resultMap[base.type]], 'PredictionValue')
       const publishValues = getCpi(data0, economicIndicators.data[resultMap[base.type]], 'PublishValue')
@@ -232,7 +234,8 @@ const MyStockTrendEcharts = () => {
             type: 'cross'
           },
           formatter: (params) => {
-            console.log(data)
+            const theme = Number(Cookies.get('eucleia-theme')) || 0
+            console.log(theme)
             let res = ''
             let formatName = ['', '开盘', '收盘', '最高', '最低', '涨跌幅']
             if (params.length > 0) {
@@ -249,9 +252,25 @@ const MyStockTrendEcharts = () => {
                   // <span class="markPoint" style="background: ${param.color}; ">
                   res += '<div style="display:flex;flex-wrap: wrap; margin-top:-10px;">'
                   param.data.forEach((item, index) => {
-                    let prefix = index === 5 ? '%' : ''
-                    if (index > 0) {
-                      res += `<span class="markLabel" style="width: 33.33%"> ${formatName[index]}:&nbsp;&nbsp;<i style="color:${param.color}">${toThousandFilter(item)}${prefix}</i></span>`
+                    // 6 为前一个值
+                    if (index < 6) {
+                      const prevData = param.data[6]
+                      let color = '#333'
+                      if (prevData) {
+                        if (item < prevData.ClosingPrice) {
+                          color = themes[theme].downColor
+                        } else if (item > prevData.ClosingPrice) {
+                          color = themes[theme].upColor
+                        }
+                      }
+                      if (index === 5) {
+                        color = item > 0 ? themes[theme].upColor : item < 0 ? themes[theme].downColor : '#333'
+                      }
+                      let subfix = (index === 5 && item !== null) ? '%' : ''
+                      let prefix = (index === 5 && item > 0) ? '+' : ''
+                      if (index > 0) {
+                        res += `<span class="markLabel" style="width: 33.33%"> ${formatName[index]}:&nbsp;&nbsp;<i style="color:${color}">${prefix}${toThousandFilter(item)}${subfix}</i></span>`
+                      }
                     }
                   })
                   res += '</div>'
@@ -272,8 +291,6 @@ const MyStockTrendEcharts = () => {
           },
           extraCssText: 'box-shadow: none;right:0;z-index:99;',
           position: function (pos, params, el, elRect, size) {
-            console.log(elRect)
-            console.log(size)
             var obj = {
                 top: -20,
                 left: 0
@@ -526,9 +543,12 @@ const MyStockTrendEcharts = () => {
     return title
   }, [highestPrice, upRate, accumulate, initPrice, base.type])
 
-  // const tipTitle = useMemo(() => {
-  //   return 'tipTitle'
-  // }, [])
+  const emptyTitle = useMemo(() => {
+    if (!base.startTime || !base.endTime) return '暂无数据'
+    const currentMarket = marketDatas.find(item => item.value === base.market)
+    let minLabel = currentMarket ? currentMarket.minLabel : 'NASDAQ'
+    return `暂无${moment(base.startTime).format('YYYY.MM')} - ${moment(base.endTime).format('YYYY.MM')}内${minLabel}数据`
+  }, [base.startTime, base.endTime, base.market])
 
   return <div className="stock-trend-container">
         <div className="stock-trend-title">{stockTitle}</div>
@@ -560,7 +580,7 @@ const MyStockTrendEcharts = () => {
                 notMerge={true}
                 lazyUpdate={true}
                 showLoading={loading}
-              /> : <Empty/>
+              /> : <Empty description={emptyTitle}/>
             }
           </div>
         </div>

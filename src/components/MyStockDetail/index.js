@@ -1,6 +1,6 @@
 import './index.css';
 import moment from 'moment';
-import { useState, useEffect, useMemo, useContext, Fragment } from 'react';
+import { useState, useEffect, useMemo, useContext } from 'react';
 import { Radio, Table } from 'antd';
 import {
   ArrowUpOutlined,
@@ -255,27 +255,25 @@ const MyStockDetail = () => {
   return (
     <div className="stock-detail-container">
       <div className="stock-detail-title">{stockTitle}</div>
-      <div className='stock-detail-tab'>
-        <Radio.Group value={current} onChange={onClick} buttonStyle="solid">
-          <Radio.Button value='all' key='all' size="small">
-            全部({tabsData.total}次)
-          </Radio.Button>
-          {
-            (!tabsData.high_value && !tabsData.low_value && !tabsData.equal_value) ? null :
-            <Fragment>
-              <Radio.Button value='highest' key='highest' size="small">
-                高于预期({tabsData.high_value}次)
-              </Radio.Button>
-              <Radio.Button value='lowest' key='lowest' size="small">
-                低于预期({tabsData.low_value}次)
-              </Radio.Button>
-              <Radio.Button value='equal' key='equal' size="small">
-                符合预期({tabsData.equal_value}次)
-              </Radio.Button>
-            </Fragment>
-          }
-        </Radio.Group>
-      </div>
+      {
+        (!tabsData.high_value && !tabsData.low_value && !tabsData.equal_value) ? null :
+        <div className='stock-detail-tab'>
+          <Radio.Group value={current} onChange={onClick} buttonStyle="solid">
+            <Radio.Button value='all' key='all' size="small">
+              全部({tabsData.total}次)
+            </Radio.Button>
+            <Radio.Button value='highest' key='highest' size="small">
+              高于预期({tabsData.high_value}次)
+            </Radio.Button>
+            <Radio.Button value='lowest' key='lowest' size="small">
+              低于预期({tabsData.low_value}次)
+            </Radio.Button>
+            <Radio.Button value='equal' key='equal' size="small">
+              符合预期({tabsData.equal_value}次)
+            </Radio.Button>
+          </Radio.Group>
+        </div>
+      }
       <ul className="stock-detail">
         {/* <li className="stock-detail-item-title">
           <Space wrap size={20}>
