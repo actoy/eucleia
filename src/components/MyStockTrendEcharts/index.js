@@ -155,14 +155,16 @@ const MyStockTrendEcharts = () => {
   }
 
   const getG2Data = () => {
+    if (!base.startTime || !base.endTime) return
     setLoading(true)
     let promises = [fetchEconomicStock(), fetchEconomicIndicators()]
     if (base.type === 'cpi') {
       promises.push(fetchInterestRateIndicators())
     }
-    setEmpty(false)
     Promise.all(promises).then(([economicStock, economicIndicators, interestRateIndicators]) => {
       setLoading(false)
+      console.log(economicStock.data)
+      setEmpty(false)
       if (!economicStock.data[resultMap[base.market]] || economicStock.data[resultMap[base.market]].length === 0) {
         setEmpty(true)
       }
@@ -435,6 +437,7 @@ const MyStockTrendEcharts = () => {
             type: 'line',
             yAxisIndex: 1,
             data: publishValues,
+            z: 9,
             showAllSymbol: true,
             symbolSize: 4,
             smooth: false,
@@ -447,6 +450,7 @@ const MyStockTrendEcharts = () => {
             name: predictName,
             type: 'line',
             yAxisIndex: 1,
+            z: 8,
             data: predictValues,
             showAllSymbol: true,
             symbolSize: 4,

@@ -177,7 +177,7 @@ const Factor = () => {
           </Picker> : null
         }
       </li>
-      <li className="factor-item" style={{display: 'none'}}>
+      <li className="factor-item">
         <span className="factor-label">选择指数：</span>
         {marketDatas.map((tag) => (
           <CheckableTag

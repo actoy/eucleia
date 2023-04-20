@@ -35,7 +35,7 @@
       "react-app/jest"
     ]
   },
-  "proxy": "http://123.56.108.201",
+  "proxy": "http://langhua.ai",
   "browserslist": {
     "production": [
       ">0.2%",

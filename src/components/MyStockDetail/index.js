@@ -130,13 +130,15 @@ const MyStockDetail = () => {
       return 0;
     }
   };
-  const getTrendDetail = function (expect, startTime, endTime, type) {
+  const getTrendDetail = function (expect, startTime, endTime, type, market) {
     let baseUrl = 'economic'
     if (type === 'interest_rate') {
       baseUrl = 'interest/rate'
     }
+    let marketData = marketDatas.find(item => item.value === market)
+    let detailPrefix = marketData ? marketData.detailRrefixUrl : '/'
     return fetch({
-      url: `v1/${baseUrl}/trend/detail`,
+      url: `v1/${baseUrl}${detailPrefix}/trend/detail`,
       method: 'post',
       data: {
         expect: expect || 'all',
@@ -183,7 +185,7 @@ const MyStockDetail = () => {
       }
       fetch({ url: `/v1/${baseUrl}/detail/tabs?startTime=${base.startTime}&endTime=${base.endTime}` }).then(({ data }) => {
         setTabsData(data);
-        getTrendDetail(current, base.startTime, base.endTime, base.type);
+        getTrendDetail(current, base.startTime, base.endTime, base.type, base.market);
       });
     }
   }, [base, current])
@@ -192,7 +194,7 @@ const MyStockDetail = () => {
     const { value } = e.target;
     if (!value) return;
     setCurrent(value);
-    getTrendDetail(value, base.startTime, base.endTime, base.type);
+    getTrendDetail(value, base.startTime, base.endTime, base.type, base.market);
   };
   const color = (val1, val2) => {
     if (val1 === val2) return themes[theme].eqCls;

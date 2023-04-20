@@ -32,13 +32,23 @@ export const resultMap = {
   'cpi': 'cpi_list',
   'interest_rate': 'rate_list',
   'ppi': 'ppi_list',
-  'non-agricultural': 'non-agricultural_list'
+  'non-agricultural': 'non-agricultural_list',
+  'dji': 'dji_list'
 }
 
+// http://123.56.108.201/v1/economic/trend/detail
+// http://123.56.108.201/v1/economic/dji/trend/detail
 export const marketDatas = [
   {
     label: '纳斯达克',
     value: 'ndaq',
-    minLabel: 'NASDAQ'
+    minLabel: 'NASDAQ',
+    detailRrefixUrl: '/'
+  },
+  {
+    label: '道琼斯',
+    value: 'dji',
+    minLabel: '道琼斯',
+    detailRrefixUrl: '/dji' // 短期走势详情
   }
 ]
