@@ -109,13 +109,14 @@ const MyStockTrendEcharts = () => {
   // }, [])
 
   const getCpi = (data0, cpis, key) => {
-    return data0.categoryData.map(cate => {
-      const find = cpis.find(item => moment(item.PublishDate).format('YYYY/MM/DD') === cate)
-      if (find) {
-        return [moment(find.PublishDate).format('YYYY/MM/DD'), find[key]]
-      }
-      return ''
-    }).filter(item => !!item)
+    // return data0.categoryData.map(cate => {
+    //   const find = cpis.find(item => moment(item.PublishDate).format('YYYY/MM/DD') === cate)
+    //   if (find) {
+    //     return [moment(find.PublishDate).format('YYYY/MM/DD'), find[key]]
+    //   }
+    //   return ''
+    // }).filter(item => !!item)
+    return cpis.map(item => ([moment(item.PublishDate).format('YYYY/MM/DD'), item[key]]))
   }
 
   const fetchEconomicStock = () => {
@@ -212,7 +213,7 @@ const MyStockTrendEcharts = () => {
         setUpRate((highest - init).toFixed(2) )
         const last = indicators[indicators.length - 1].PublishValue
         const first = indicators[0].PublishValue
-        setAccumulate((((last * 100) / (first * 100)) / 100 -1).toFixed(2))
+        setAccumulate((((last * 100) / (first * 100)) -1).toFixed(2))
       }
 
       let legend = ['日K', 'CPI公布', 'CPI预测', '利率决议']
@@ -223,6 +224,14 @@ const MyStockTrendEcharts = () => {
         publishName = '利率公布'
         predictName = '利率预测'
       }
+
+      let categoryData = Array.from(new Set(data0.categoryData
+        .concat(predictValues.map(item => item[0]))
+        .concat(publishValues.map(item => item[0]))
+        .concat(interestRateValues.map(item => item[0])))).sort()
+
+      console.log(categoryData)
+      
       
 
       setOptions({
@@ -311,7 +320,7 @@ const MyStockTrendEcharts = () => {
         },
         xAxis: {
           type: 'category',
-          data: data0.categoryData,
+          data: categoryData,
           boundaryGap: false,
           axisLine: { onZero: false },
           splitLine: { show: false },
