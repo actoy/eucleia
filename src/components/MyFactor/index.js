@@ -65,7 +65,7 @@ const Factor = () => {
           value: `${item.start_time},${item.end_time}`,
           label: <div className="option-label-item">
             <label className='picker-main'>{ `${startTime} - ${endTime}` }</label>
-            <label className='picker-sub'>{title} ({item?.start_value}% &gt; {item?.highest_value}%)</label>
+            <label className='picker-sub'>{title} ({item?.start_value}% &rarr; {item?.highest_value}%)</label>
           </div>
         };
       });

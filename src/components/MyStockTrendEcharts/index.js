@@ -211,9 +211,13 @@ const MyStockTrendEcharts = () => {
         setInitPrice(init.toFixed(2))
         setHighestPrice(highest.toFixed(2))
         setUpRate((highest - init).toFixed(2) )
-        const last = indicators[indicators.length - 1].PublishValue
-        const first = indicators[0].PublishValue
-        setAccumulate((((last * 100) / (first * 100)) -1).toFixed(2))
+
+        const stockData = data0.values
+        const last = stockData[stockData.length - 1][2]
+        const first = stockData[0][2]
+        const accu = (((last * 100) / (first * 100)) -1) * 100
+        const prefix = accu > 0 ? '+' : ''
+        setAccumulate(prefix + accu.toFixed(2))
       }
 
       let legend = ['日K', 'CPI公布', 'CPI预测', '利率决议']
@@ -316,7 +320,7 @@ const MyStockTrendEcharts = () => {
         grid: {
           left: '12%',
           right: '8%',
-          bottom: '30px'
+          bottom: '40px'
         },
         xAxis: {
           type: 'category',
@@ -325,7 +329,11 @@ const MyStockTrendEcharts = () => {
           axisLine: { onZero: false },
           splitLine: { show: false },
           min: 'dataMin',
-          max: 'dataMax'
+          max: 'dataMax',
+          axisLabel: {
+            rotate: 30,
+            fontSize: 10
+          }
         },
         yAxis: [{
           scale: true,
@@ -448,7 +456,7 @@ const MyStockTrendEcharts = () => {
             data: publishValues,
             z: 9,
             showAllSymbol: true,
-            symbolSize: 4,
+            symbolSize: 3,
             smooth: false,
             lineStyle: {
               opacity: 0.5,
@@ -462,7 +470,7 @@ const MyStockTrendEcharts = () => {
             z: 8,
             data: predictValues,
             showAllSymbol: true,
-            symbolSize: 4,
+            symbolSize: 3,
             smooth: false,
             lineStyle: {
               opacity: 0.5,
@@ -476,7 +484,7 @@ const MyStockTrendEcharts = () => {
               yAxisIndex: 1,
               data: interestRateValues,
               showAllSymbol: true,
-              symbolSize: 4,
+              symbolSize: 3,
               smooth: false,
               lineStyle: {
                 opacity: 0.5,
@@ -597,12 +605,15 @@ const MyStockTrendEcharts = () => {
             }
           </div>
         </div>
-        <div className='stock-trend-summary'>
-          <div>
-            <img className="summary-logo" src={require('../../static/images/用研.png')} alt="wave-fish" />
-            <label>{summary}</label>
-          </div>
-        </div>
+        {
+          !empty ?
+          <div className='stock-trend-summary'>
+            <div>
+              <img className="summary-logo" src={require('../../static/images/用研.png')} alt="wave-fish" />
+              <label>{summary}</label>
+            </div>
+          </div> : null
+        }
       </div>
 }
 
