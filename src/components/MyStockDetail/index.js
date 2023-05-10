@@ -1,7 +1,7 @@
 import './index.css';
 import moment from 'moment';
 import { useState, useEffect, useMemo, useContext } from 'react';
-import { Radio, Table } from 'antd';
+import { Radio, Spin, Table } from 'antd';
 import {
   ArrowUpOutlined,
   ArrowDownOutlined,
@@ -120,6 +120,7 @@ const MyStockDetail = () => {
     type: 'cpi',
     market: 'ndaq'
   })
+  const [loading, setLoading] = useState(false)
 
   const { theme } = useContext(AppContext)
 
@@ -137,6 +138,7 @@ const MyStockDetail = () => {
     }
     let marketData = marketDatas.find(item => item.value === market)
     let detailPrefix = marketData ? marketData.detailRrefixUrl : '/'
+    setLoading(true)
     return fetch({
       url: `v1/${baseUrl}${detailPrefix}/trend/detail`,
       method: 'post',
@@ -150,6 +152,8 @@ const MyStockDetail = () => {
     }).then(({ data }) => {
       setData(data.lists);
       setRisingInfo(data.rising_info);
+    }).finally(() => {
+      setLoading(false)
     });
   };
 
@@ -257,151 +261,113 @@ const MyStockDetail = () => {
   return (
     <div className="stock-detail-container">
       <div className="stock-detail-title">{stockTitle}</div>
-      {
-        (!tabsData.high_value && !tabsData.low_value && !tabsData.equal_value) ? null :
-        <div className='stock-detail-tab'>
-          <Radio.Group value={current} onChange={onClick} buttonStyle="solid">
-            <Radio.Button value='all' key='all' size="small">
-              全部({tabsData.total}次)
-            </Radio.Button>
-            <Radio.Button value='highest' key='highest' size="small">
-              高于预期({tabsData.high_value}次)
-            </Radio.Button>
-            <Radio.Button value='lowest' key='lowest' size="small">
-              低于预期({tabsData.low_value}次)
-            </Radio.Button>
-            <Radio.Button value='equal' key='equal' size="small">
-              符合预期({tabsData.equal_value}次)
-            </Radio.Button>
-          </Radio.Group>
-        </div>
-      }
-      <ul className="stock-detail">
-        {/* <li className="stock-detail-item-title">
-          <Space wrap size={20}>
-            <span>公布日</span>
-            <span>公布值/预期值</span>
-          </Space>
-          <div>
-            <Select
-              showSearch
-              placeholder="请选择经济周期"
-              optionFilterProp="children"
-              onChange={onChange}
-              value="7"
-              // onSearch={onSearch}
-              filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
-              options={periodTime}
-              style={{ width: 100 }}
-            />
+      <Spin spinning={loading}>
+        {
+          (!tabsData.high_value && !tabsData.low_value && !tabsData.equal_value) ? null :
+          <div className='stock-detail-tab'>
+            <Radio.Group value={current} onChange={onClick} buttonStyle="solid">
+              <Radio.Button value='all' key='all' size="small">
+                全部({tabsData.total}次)
+              </Radio.Button>
+              <Radio.Button value='highest' key='highest' size="small">
+                高于预期({tabsData.high_value}次)
+              </Radio.Button>
+              <Radio.Button value='lowest' key='lowest' size="small">
+                低于预期({tabsData.low_value}次)
+              </Radio.Button>
+              <Radio.Button value='equal' key='equal' size="small">
+                符合预期({tabsData.equal_value}次)
+              </Radio.Button>
+            </Radio.Group>
           </div>
-        </li> */}
-        {/* {current === 'all' ? (
-          <li className="stock-detail-item-tip gray-bottom-border">
-            周期内CPI共发布{tabsData.total}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.total)}%，15个交易日上涨概率
-            {toFixedPercent(risingInfo.rising_number_15, tabsData.total)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.total)}%
-          </li>
-        ) : current === 'highest' ? (
-          <li className="stock-detail-item-tip gray-bottom-border">
-            周期内CPI发布高于预期共{tabsData.high_value}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.high_value)}%，15个交易日上涨概率
-            {toFixedPercent(risingInfo.rising_number_15, tabsData.high_value)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.high_value)}%
-          </li>
-        ) : current === 'lowest' ? (
-          <li className="stock-detail-item-tip gray-bottom-border">
-            周期内CPI发布低于预期共{tabsData.low_value}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.low_value)}%，15个交易日上涨概率
-            {toFixedPercent(risingInfo.rising_number_15, tabsData.low_value)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.low_value)}%
-          </li>
-        ) : (
-          <li className="stock-detail-item-tip gray-bottom-border">
-            周期内CPI发布符合预期共{tabsData.equal_value}次，7个交易日上涨概率{toFixedPercent(risingInfo.rising_number_7, tabsData.equal_value)}%，15个交易日上涨概率
-            {toFixedPercent(risingInfo.rising_number_15, tabsData.equal_value)}%，30个交易日上涨概率{toFixedPercent(risingInfo.rising_number_30, tabsData.equal_value)}%
-          </li>
-        )} */}
-        <li className="stock-detail-item-detail">
-          <Table
-            dataSource={data}
-            pagination={false}
-            bordered={false}
-            sticky={true}
-            // pagination={{
-            //   pageSize: 50,
-            // }}
-            // scroll={{
-            //   y: 640,
-            // }}
-          >
-            <ColumnGroup title={groupTitle} key='group'>
-              <Column 
-                title={cssTitle("发布日期")} 
-                dataIndex={`${base.type}_info`}
-                key="PublishDate" 
-                // width={90}
-                align="center" 
-                render={(info) => info && <label className='date-title'>{moment(info['PublishDate']).format('YYYY-MM-DD')}</label>} />
-              <Column
-                title={cssTitle("公布值(预测值)")}
-                dataIndex={`${base.type}_info`}
-                key="PublishValue"
-                align="center"
-                render={(info, record) => 
-                  info && <label>
-                    {getIcon(info.PublishValue, info.PredictionValue)}
-                    <i className='small'>{convertData(info['PublishValue'], 1, 1)}&nbsp;</i>
-                    <span className='small'>({convertData(info['PredictionValue'], 1, 1)})</span>
-                  </label>
-                }
-              />
-              {/* <Column title={cssTitle("预测值" width="14%" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue'] + '%'} /> */}
-              <Column
-                title={cssTitle("7日")}
-                dataIndex="trend_info"
-                key="trending_7"
-                align="center"
-                // width={60}
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{convertData(trend_info['trending_7'])}</i>}
-              />
-              <Column
-                title={cssTitle("15日")}
-                dataIndex="trend_info"
-                key="trending_15"
-                align="center"
-                // width={60}
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{convertData(trend_info['trending_15'])}</i>}
-              />
-              <Column
-                title={cssTitle("30日")}
-                dataIndex="trend_info"
-                key="trending_30"
-                align="center"
-                // width={60}
-                render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{convertData(trend_info['trending_30'])}</i>}
-              />
-            </ColumnGroup>
-          </Table>
-          {/* <Table columns={columns} dataSource={data} pagination={false}/> */}
-          {/* <Space wrap size={20}>
-            <span>
-              03-04
+        }
+        <ul className="stock-detail">
+          <li className="stock-detail-item-detail">
+            <Table
+              dataSource={data}
+              pagination={false}
+              bordered={false}
+              sticky={true}
+              // pagination={{
+              //   pageSize: 50,
+              // }}
+              // scroll={{
+              //   y: 640,
+              // }}
+            >
+              <ColumnGroup title={groupTitle} key='group'>
+                <Column 
+                  title={cssTitle("发布日期")} 
+                  dataIndex={`${base.type}_info`}
+                  key="PublishDate" 
+                  // width={90}
+                  align="center" 
+                  render={(info) => info && <label className='date-title'>{moment(info['PublishDate']).format('YYYY-MM-DD')}</label>} />
+                <Column
+                  title={cssTitle("公布值(预测值)")}
+                  dataIndex={`${base.type}_info`}
+                  key="PublishValue"
+                  align="center"
+                  render={(info, record) => 
+                    info && <label>
+                      {getIcon(info.PublishValue, info.PredictionValue)}
+                      <i className='small'>{convertData(info['PublishValue'], 1, 1)}&nbsp;</i>
+                      <span className='small'>({convertData(info['PredictionValue'], 1, 1)})</span>
+                    </label>
+                  }
+                />
+                {/* <Column title={cssTitle("预测值" width="14%" dataIndex="cpi_info" key="PredictionValue" align="center" render={(cpi_info) => cpi_info['PredictionValue'] + '%'} /> */}
+                <Column
+                  title={cssTitle("7日")}
+                  dataIndex="trend_info"
+                  key="trending_7"
+                  align="center"
+                  // width={60}
+                  render={(trend_info) => <i className={color(parseFloat(trend_info['trending_7']), 0)}>{convertData(trend_info['trending_7'])}</i>}
+                />
+                <Column
+                  title={cssTitle("15日")}
+                  dataIndex="trend_info"
+                  key="trending_15"
+                  align="center"
+                  // width={60}
+                  render={(trend_info) => <i className={color(parseFloat(trend_info['trending_15']), 0)}>{convertData(trend_info['trending_15'])}</i>}
+                />
+                <Column
+                  title={cssTitle("30日")}
+                  dataIndex="trend_info"
+                  key="trending_30"
+                  align="center"
+                  // width={60}
+                  render={(trend_info) => <i className={color(parseFloat(trend_info['trending_30']), 0)}>{convertData(trend_info['trending_30'])}</i>}
+                />
+              </ColumnGroup>
+            </Table>
+            {/* <Table columns={columns} dataSource={data} pagination={false}/> */}
+            {/* <Space wrap size={20}>
+              <span>
+                03-04
+                <br />
+                2022
+              </span>
+              <span>
+                <i className="red">6.5%</i>/<i>6.2%</i>
+                <br />
+                <Button size="small" danger>
+                  高于预期
+                </Button>
+              </span>
+            </Space>
+            <div id="a" className="stack"></div>
+            <div className="relative">
+              <span className="red">-2.7%</span>
               <br />
-              2022
-            </span>
-            <span>
-              <i className="red">6.5%</i>/<i>6.2%</i>
-              <br />
-              <Button size="small" danger>
-                高于预期
-              </Button>
-            </span>
-          </Space>
-          <div id="a" className="stack"></div>
-          <div className="relative">
-            <span className="red">-2.7%</span>
-            <br />
-            <span className="detail blue">查看30日完整走势</span>
-            <div id="ADetail"></div>
-          </div> */}
-        </li>
-      </ul>
+              <span className="detail blue">查看30日完整走势</span>
+              <div id="ADetail"></div>
+            </div> */}
+          </li>
+        </ul>
+      </Spin>
     </div>
   );
 };

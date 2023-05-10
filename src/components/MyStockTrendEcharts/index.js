@@ -17,7 +17,7 @@ import {
 } from 'echarts/charts';
 import { UniversalTransition } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
-import { Button, Empty, Space } from 'antd';
+import { Button, Empty, Space, Spin } from 'antd';
 import PubSub from 'pubsub-js';
 import Cookies from 'js-cookie'
 import { fetch } from '../../modules';
@@ -213,8 +213,8 @@ const MyStockTrendEcharts = () => {
         setUpRate((highest - init).toFixed(2) )
 
         const stockData = data0.values
-        const last = stockData[stockData.length - 1][2]
-        const first = stockData[0][2]
+        const last = stockData.length > 0 ? stockData[stockData.length - 1][2] : 0
+        const first = stockData.length > 0 ? stockData[0][2] : 1
         const accu = (((last * 100) / (first * 100)) -1) * 100
         const prefix = accu > 0 ? '+' : ''
         setAccumulate(prefix + accu.toFixed(2))
@@ -574,46 +574,48 @@ const MyStockTrendEcharts = () => {
   return <div className="stock-trend-container">
         <div className="stock-trend-title">{stockTitle}</div>
         {/* <div className="stock-trend-tip">{tipTitle}</div> */}
-        <div className="stock-trend-chart">
-          <div className="stock-trend-index">
-            {/* <Radio.Group style={{display: 'none'}} value={base.market} onChange={onChangeMarket} buttonStyle="solid">
-              {base.marketIndex.map((item, index) => (
-                <Radio.Button value={item.value} key={item.value} size="small">
-                  {item.label}
-                </Radio.Button>
-              ))}
-            </Radio.Group> */}
-            <Space wrap size={5}>
-              {base.marketTime.map((item, index) => (
-                <Button type={index === 0 ? 'primary' : 'default'} key={item} size="small">
-                  {item}
-                </Button>
-              ))}
-            </Space>
-          </div>
-          <div id="container">
-            {
-              !empty ?
-              <ReactEChartsCore
-                ref={chartRef}
-                echarts={echarts}
-                option={options}
-                notMerge={true}
-                lazyUpdate={true}
-                showLoading={loading}
-              /> : <Empty description={emptyTitle}/>
-            }
-          </div>
-        </div>
-        {
-          !empty ?
-          <div className='stock-trend-summary'>
-            <div>
-              <img className="summary-logo" src={require('../../static/images/用研.png')} alt="wave-fish" />
-              <label>{summary}</label>
+        <Spin spinning={loading}>
+          <div className="stock-trend-chart">
+            <div className="stock-trend-index">
+              {/* <Radio.Group style={{display: 'none'}} value={base.market} onChange={onChangeMarket} buttonStyle="solid">
+                {base.marketIndex.map((item, index) => (
+                  <Radio.Button value={item.value} key={item.value} size="small">
+                    {item.label}
+                  </Radio.Button>
+                ))}
+              </Radio.Group> */}
+              <Space wrap size={5}>
+                {base.marketTime.map((item, index) => (
+                  <Button type={index === 0 ? 'primary' : 'default'} key={item} size="small">
+                    {item}
+                  </Button>
+                ))}
+              </Space>
             </div>
-          </div> : null
-        }
+            <div id="container">
+              {
+                !empty ?
+                <ReactEChartsCore
+                  ref={chartRef}
+                  echarts={echarts}
+                  option={options}
+                  notMerge={true}
+                  lazyUpdate={true}
+                  // showLoading={loading}
+                /> : <Empty description={emptyTitle}/>
+              }
+            </div>
+          </div>
+          {
+            !empty ?
+            <div className='stock-trend-summary'>
+              <div>
+                <img className="summary-logo" src={require('../../static/images/用研.png')} alt="wave-fish" />
+                <label>{summary}</label>
+              </div>
+            </div> : null
+          }
+        </Spin>
       </div>
 }
 
